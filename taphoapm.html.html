@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>Tạp Hoá PM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@undecaf/zbar-wasm@0.9.15/dist/index.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --red:#e8401c;--blue:#2563eb;--green:#16a34a;
+  --red-light:#fff1ee;--blue-light:#eff6ff;--green-light:#f0fdf4;
+  --gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+  --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;
+  --gray-600:#4b5563;--gray-700:#374151;--gray-800:#1f2937;--gray-900:#111827;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.08);
+  --shadow:0 2px 8px rgba(0,0,0,.12);
+  --shadow-lg:0 4px 20px rgba(0,0,0,.15);
+  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+}
+html,body{height:100%;font-family:'Be Vietnam Pro',sans-serif;background:#f5f5f5;color:var(--gray-900);overflow:hidden}
+
+/* ===== LOGIN SCREEN ===== */
+#loginScreen{
+  position:fixed;inset:0;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:24px;
+}
+.login-logo{text-align:center;margin-bottom:40px}
+.login-logo .store-icon{font-size:56px;margin-bottom:12px}
+.login-logo h1{color:#fff;font-size:28px;font-weight:800;letter-spacing:-0.5px}
+.login-logo p{color:rgba(255,255,255,.5);font-size:13px;margin-top:4px}
+.login-card{background:rgba(255,255,255,.07);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:28px;width:100%;max-width:360px}
+.login-field{margin-bottom:16px}
+.login-field label{display:block;color:rgba(255,255,255,.7);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px}
+.login-field input{width:100%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:14px 16px;color:#fff;font-size:16px;font-family:inherit;outline:none;transition:border-color .2s}
+.login-field input::placeholder{color:rgba(255,255,255,.35)}
+.login-field input:focus{border-color:rgba(255,255,255,.4)}
+.login-btn{width:100%;background:var(--red);border:none;border-radius:12px;padding:16px;color:#fff;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:8px;transition:opacity .2s}
+.login-btn:active{opacity:.85}
+.login-error{color:#ff6b6b;font-size:13px;text-align:center;margin-top:12px;display:none}
+
+/* ===== APP SHELL ===== */
+#app{display:none;flex-direction:column;height:100vh;height:100dvh}
+.top-bar{background:#fff;border-bottom:1px solid var(--gray-200);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:100}
+.top-bar-title{font-size:17px;font-weight:700;color:var(--gray-900)}
+.top-bar-sub{font-size:12px;color:var(--gray-500);margin-top:1px}
+.top-bar-right{display:flex;align-items:center;gap:8px}
+.logout-btn{background:var(--gray-100);border:none;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--gray-600);font-family:inherit;cursor:pointer}
+.admin-badge{background:var(--red);color:#fff;font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px}
+
+.page-content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:80px}
+.page{display:none}
+.page.active{display:block}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--gray-200);display:flex;z-index:200;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px 8px;border:none;background:none;cursor:pointer;font-family:inherit;color:var(--gray-400);transition:color .15s;position:relative}
+.nav-item.active{color:var(--red)}
+.nav-icon{font-size:22px;line-height:1}
+.nav-label{font-size:10px;font-weight:600;margin-top:3px;letter-spacing:0.3px}
+.nav-badge{position:absolute;top:6px;right:calc(50% - 14px);background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 5px;min-width:16px;text-align:center;display:none}
+.nav-badge.show{display:block}
+
+/* ===== SEARCH BAR ===== */
+.search-wrap{padding:12px 16px;background:#fff;border-bottom:1px solid var(--gray-100);display:flex;gap:8px;position:sticky;top:0;z-index:50}
+.search-input-wrap{flex:1;position:relative}
+.search-input-wrap input{width:100%;background:var(--gray-100);border:none;border-radius:10px;padding:11px 16px 11px 40px;font-size:15px;font-family:inherit;outline:none;color:var(--gray-900)}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--gray-400)}
+.scan-btn{background:var(--blue);border:none;border-radius:10px;padding:11px 14px;font-size:18px;cursor:pointer;flex-shrink:0}
+
+/* ===== CATEGORY FILTER ===== */
+.cat-scroll{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;-webkit-overflow-scrolling:touch;background:#fff;border-bottom:1px solid var(--gray-100)}
+.cat-scroll::-webkit-scrollbar{display:none}
+.cat-chip{flex-shrink:0;background:var(--gray-100);border:none;border-radius:20px;padding:7px 14px;font-size:13px;font-weight:600;color:var(--gray-600);font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}
+.cat-chip.active{background:var(--red);color:#fff}
+
+/* ===== PRODUCT LIST ===== */
+.product-list{padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.product-card{background:#fff;border-radius:12px;padding:14px;box-shadow:var(--shadow-sm);cursor:pointer;transition:transform .1s;border:1.5px solid transparent}
+.product-card:active{transform:scale(.98)}
+.product-card.selected{border-color:var(--blue)}
+.product-card-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.product-name{font-size:15px;font-weight:600;color:var(--gray-900);line-height:1.35;flex:1}
+.product-price{font-size:17px;font-weight:800;color:var(--red);white-space:nowrap}
+.product-meta{display:flex;gap:8px;margin-top:6px;align-items:center}
+.product-unit{background:var(--gray-100);border-radius:6px;padding:2px 8px;font-size:12px;font-weight:600;color:var(--gray-600)}
+.product-barcode{font-size:11px;color:var(--gray-400);font-family:monospace}
+.product-cat{font-size:11px;color:var(--gray-400)}
+
+/* ===== PRODUCT DETAIL (tra giá) ===== */
+.product-detail{background:#fff;border-radius:var(--radius-lg);margin:12px 16px;padding:20px;box-shadow:var(--shadow)}
+.detail-name{font-size:20px;font-weight:800;color:var(--gray-900);line-height:1.3;margin-bottom:12px}
+.detail-price-row{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.detail-price{font-size:36px;font-weight:800;color:var(--red)}
+.detail-unit{font-size:16px;color:var(--gray-500);font-weight:500}
+.detail-barcode{font-family:monospace;font-size:13px;color:var(--gray-500);margin-bottom:16px}
+.detail-close{background:var(--gray-100);border:none;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:600;color:var(--gray-600);font-family:inherit;cursor:pointer}
+
+/* Admin price edit */
+.price-edit-section{border-top:1px solid var(--gray-100);margin-top:16px;padding-top:16px}
+.price-edit-title{font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px}
+.price-edit-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.price-edit-label{font-size:14px;font-weight:600;color:var(--gray-700);width:80px;flex-shrink:0}
+.price-edit-input{flex:1;border:1.5px solid var(--gray-200);border-radius:8px;padding:9px 12px;font-size:15px;font-weight:700;font-family:inherit;outline:none;color:var(--gray-900);text-align:right}
+.price-edit-input:focus{border-color:var(--blue)}
+.price-save-btn{background:var(--green);border:none;border-radius:8px;padding:9px 14px;color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
+
+/* ===== LÊN ĐƠN ===== */
+.order-tabs{display:flex;background:#fff;border-bottom:2px solid var(--gray-100);position:sticky;top:0;z-index:50}
+.order-tab{flex:1;padding:12px 4px;border:none;background:none;font-family:inherit;font-size:14px;font-weight:600;color:var(--gray-400);cursor:pointer;position:relative;transition:color .15s;border-bottom:2.5px solid transparent;margin-bottom:-2px}
+.order-tab.active{color:var(--red);border-bottom-color:var(--red)}
+.tab-badge{display:inline-flex;align-items:center;justify-content:center;background:var(--red);color:#fff;font-size:10px;font-weight:700;border-radius:10px;padding:1px 5px;min-width:16px;margin-left:4px;vertical-align:middle}
+.tab-badge:empty{display:none}
+.order-panel{display:none;padding:12px 16px;padding-bottom:0}
+.order-panel.active{display:block}
+
+.order-items{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+.order-item{background:#fff;border-radius:10px;padding:12px 14px;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:10px}
+.order-item-name{flex:1;font-size:14px;font-weight:600;color:var(--gray-900);line-height:1.3}
+.order-item-unit{font-size:11px;color:var(--gray-400);font-weight:400}
+.order-qty-wrap{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.qty-btn{background:var(--gray-100);border:none;border-radius:6px;width:30px;height:30px;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-700)}
+.qty-btn.minus{color:var(--red)}
+.qty-btn.plus{color:var(--green)}
+.qty-num{font-size:16px;font-weight:700;color:var(--gray-900);min-width:24px;text-align:center}
+.order-item-price{font-size:14px;font-weight:700;color:var(--red);flex-shrink:0;min-width:72px;text-align:right}
+
+.order-total-bar{position:sticky;bottom:80px;left:0;right:0;background:var(--gray-900);color:#fff;border-radius:12px;padding:14px 18px;margin:8px 0;display:flex;justify-content:space-between;align-items:center}
+.order-total-label{font-size:13px;color:rgba(255,255,255,.6);font-weight:500}
+.order-total-amount{font-size:22px;font-weight:800}
+.order-total-count{font-size:12px;color:rgba(255,255,255,.5)}
+.order-actions{display:flex;gap:8px;padding:0 0 12px}
+.order-done-btn{flex:1;background:var(--green);border:none;border-radius:10px;padding:14px;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+.order-print-btn{background:var(--blue);border:none;border-radius:10px;padding:14px 18px;color:#fff;font-size:18px;cursor:pointer}
+.empty-order{text-align:center;padding:48px 24px;color:var(--gray-400)}
+.empty-order .empty-icon{font-size:48px;margin-bottom:12px}
+.empty-order p{font-size:14px;font-weight:500}
+
+/* ===== THÊM SẢN PHẨM (admin) ===== */
+.form-section{padding:16px}
+.form-card{background:#fff;border-radius:12px;padding:20px;box-shadow:var(--shadow-sm)}
+.form-title{font-size:16px;font-weight:700;color:var(--gray-900);margin-bottom:16px}
+.form-field{margin-bottom:14px}
+.form-field label{display:block;font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.form-field input,.form-field select{width:100%;border:1.5px solid var(--gray-200);border-radius:8px;padding:11px 12px;font-size:15px;font-family:inherit;outline:none;color:var(--gray-900);background:#fff;transition:border-color .2s}
+.form-field input:focus,.form-field select:focus{border-color:var(--blue)}
+.price-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.price-cell label{font-size:11px;font-weight:700;color:var(--gray-500);display:block;margin-bottom:4px}
+.price-cell input{border:1.5px solid var(--gray-200);border-radius:8px;padding:9px 8px;font-size:14px;font-weight:700;font-family:inherit;outline:none;width:100%;text-align:right}
+.price-cell input:focus{border-color:var(--blue)}
+.form-submit{width:100%;background:var(--blue);border:none;border-radius:10px;padding:14px;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;margin-top:4px}
+.form-success{background:var(--green-light);border:1.5px solid var(--green);border-radius:8px;padding:12px;color:var(--green);font-size:14px;font-weight:600;text-align:center;display:none;margin-top:12px}
+.new-cat-wrap{display:flex;gap:8px}
+.new-cat-wrap input{flex:1}
+.new-cat-btn{background:var(--blue);border:none;border-radius:8px;padding:11px 14px;color:#fff;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap}
+
+/* ===== QUẢN LÝ (admin) ===== */
+.manage-section{padding:16px;display:flex;flex-direction:column;gap:12px}
+.manage-card{background:#fff;border-radius:12px;padding:20px;box-shadow:var(--shadow-sm)}
+.manage-card-title{font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.store-list{display:flex;flex-direction:column;gap:8px}
+.store-row{display:flex;align-items:center;gap:8px}
+.store-row input{flex:1;border:1.5px solid var(--gray-200);border-radius:8px;padding:10px 12px;font-size:14px;font-weight:600;font-family:inherit;outline:none;color:var(--gray-900)}
+.store-row input:focus{border-color:var(--blue)}
+.store-row-btn{border:none;border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;cursor:pointer;font-weight:600}
+.store-row-btn.save{background:var(--green);color:#fff}
+.store-row-btn.del{background:var(--red-light);color:var(--red)}
+.add-store-btn{width:100%;background:var(--gray-100);border:none;border-radius:8px;padding:11px;font-size:14px;font-weight:600;color:var(--gray-600);font-family:inherit;cursor:pointer;margin-top:8px}
+
+/* Password change */
+.pw-field{margin-bottom:12px}
+.pw-field label{display:block;font-size:12px;font-weight:700;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+.pw-field select,.pw-field input{width:100%;border:1.5px solid var(--gray-200);border-radius:8px;padding:11px 12px;font-size:15px;font-family:inherit;outline:none;color:var(--gray-900);background:#fff}
+.pw-field select:focus,.pw-field input:focus{border-color:var(--blue)}
+.pw-save-btn{width:100%;background:var(--red);border:none;border-radius:10px;padding:13px;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+.pw-msg{font-size:13px;font-weight:600;text-align:center;margin-top:10px;display:none}
+.pw-msg.ok{color:var(--green)}
+.pw-msg.err{color:var(--red)}
+
+/* ===== CAMERA MODAL ===== */
+#cameraModal{
+  position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:1000;display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+#cameraModal.open{display:flex}
+.camera-container{position:relative;width:min(90vw,360px);border-radius:16px;overflow:hidden;background:#000}
+#cameraVideo{width:100%;display:block;max-height:60vh;object-fit:cover}
+#cameraCanvas{display:none}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-frame{width:200px;height:140px;position:relative}
+.scan-frame::before,.scan-frame::after{content:'';position:absolute;width:30px;height:30px;border-color:#fff;border-style:solid}
+.scan-frame::before{top:0;left:0;border-width:3px 0 0 3px;border-radius:4px 0 0 0}
+.scan-frame::after{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 4px 0}
+.scan-frame-tr{position:absolute;top:0;right:0;width:30px;height:30px;border:3px solid #fff;border-left:0;border-bottom:0;border-radius:0 4px 0 0}
+.scan-frame-bl{position:absolute;bottom:0;left:0;width:30px;height:30px;border:3px solid #fff;border-right:0;border-top:0;border-radius:0 0 0 4px}
+.scan-line{position:absolute;left:4px;right:4px;height:2px;background:linear-gradient(90deg,transparent,var(--red),transparent);top:50%;animation:scanAnim 1.5s ease-in-out infinite}
+@keyframes scanAnim{0%,100%{transform:translateY(-50px)}50%{transform:translateY(50px)}}
+.camera-manual{background:rgba(255,255,255,.08);border-radius:12px;padding:16px;width:min(90vw,360px);margin-top:12px}
+.camera-manual-label{color:rgba(255,255,255,.6);font-size:12px;font-weight:600;margin-bottom:8px}
+.camera-manual-row{display:flex;gap:8px}
+.camera-manual-input{flex:1;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:11px 12px;font-size:15px;font-family:inherit;color:#fff;outline:none}
+.camera-manual-input:focus{border-color:rgba(255,255,255,.5)}
+.camera-manual-ok{background:var(--blue);border:none;border-radius:8px;padding:11px 16px;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer}
+.camera-close{position:absolute;top:16px;right:16px;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:36px;height:36px;font-size:18px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.camera-status{color:rgba(255,255,255,.7);font-size:13px;margin-top:10px;text-align:center}
+
+/* ===== TOAST ===== */
+#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--gray-900);color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;z-index:9999;transition:transform .3s;max-width:calc(100vw - 32px);text-align:center;pointer-events:none}
+#toast.show{transform:translateX(-50%) translateY(0)}
+#toast.green{background:var(--green)}
+#toast.red{background:var(--red)}
+
+/* ===== PRINT ===== */
+@media print{
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block!important}
+}
+#printArea{display:none;font-family:'Be Vietnam Pro',monospace;font-size:12px;width:80mm;margin:0 auto;padding:8px}
+.print-store{font-size:16px;font-weight:800;text-align:center;margin-bottom:4px}
+.print-date{font-size:11px;text-align:center;color:#555;margin-bottom:10px}
+.print-hr{border:none;border-top:1px dashed #000;margin:8px 0}
+.print-row{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px}
+.print-total{display:flex;justify-content:space-between;font-size:15px;font-weight:800;margin-top:4px}
+.print-footer{text-align:center;font-size:11px;color:#555;margin-top:8px}
+
+/* No results */
+.no-result{text-align:center;padding:48px 24px;color:var(--gray-400)}
+.no-result .no-icon{font-size:40px;margin-bottom:8px}
+.no-result p{font-size:14px}
+
+/* Scrollbar hide */
+.page-content::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen" style="display:flex">
+  <div class="login-logo">
+    <div class="store-icon">🏪</div>
+    <h1>Tạp Hoá PM</h1>
+    <p>Hệ thống tra giá & lên đơn</p>
+  </div>
+  <div class="login-card">
+    <div class="login-field">
+      <label>Tài khoản</label>
+      <input type="text" id="loginUser" placeholder="Nhập tên đăng nhập" autocomplete="off" autocapitalize="none">
+    </div>
+    <div class="login-field">
+      <label>Mật khẩu</label>
+      <input type="password" id="loginPass" placeholder="Nhập mật khẩu">
+    </div>
+    <button class="login-btn" onclick="doLogin()">Đăng nhập</button>
+    <div class="login-error" id="loginError">Sai tài khoản hoặc mật khẩu!</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div>
+      <div class="top-bar-title" id="topBarTitle">Tạp Hoá PM</div>
+      <div class="top-bar-sub" id="topBarSub"></div>
+    </div>
+    <div class="top-bar-right">
+      <button onclick="refreshPrices()" style="background:var(--blue-light);border:none;border-radius:8px;padding:7px 10px;font-size:16px;cursor:pointer" title="Làm mới giá">🔄</button>
+      <span class="admin-badge" id="adminBadge" style="display:none">ADMIN</span>
+      <button class="logout-btn" onclick="doLogout()">Đăng xuất</button>
+    </div>
+  </div>
+
+  <!-- Page content -->
+  <div class="page-content">
+
+    <!-- PAGE: TRA GIÁ -->
+    <div class="page active" id="pageSearch">
+      <div class="search-wrap">
+        <div class="search-input-wrap">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="searchInput" placeholder="Tên sản phẩm hoặc mã vạch..." oninput="doSearch()" autocomplete="off">
+        </div>
+        <button class="scan-btn" onclick="openCamera('search')">📷</button>
+      </div>
+      <div class="cat-scroll" id="catFilter"></div>
+      <div id="searchResult">
+        <div class="no-result">
+          <div class="no-icon">🔍</div>
+          <p>Nhập tên hoặc quét mã vạch để tìm sản phẩm</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: LÊN ĐƠN -->
+    <div class="page" id="pageOrder">
+      <div class="order-tabs">
+        <button class="order-tab active" id="tab0" onclick="switchTab(0)">Đơn 1 <span class="tab-badge" id="badge0"></span></button>
+        <button class="order-tab" id="tab1" onclick="switchTab(1)">Đơn 2 <span class="tab-badge" id="badge1"></span></button>
+        <button class="order-tab" id="tab2" onclick="switchTab(2)">Đơn 3 <span class="tab-badge" id="badge2"></span></button>
+      </div>
+      <div id="orderPanels">
+        <div class="order-panel active" id="panel0">
+          <div class="search-wrap" style="padding:12px 0 0;background:transparent">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="orderSearch0" placeholder="Tìm sản phẩm để thêm..." oninput="doOrderSearch(0)" autocomplete="off">
+            </div>
+            <button class="scan-btn" onclick="openCamera('order',0)">📷</button>
+          </div>
+          <div id="orderSearchResult0" style="background:#fff;border-radius:10px;margin-top:6px;overflow:hidden;box-shadow:var(--shadow);display:none"></div>
+          <div class="order-items" id="orderItems0"></div>
+          <div class="order-total-bar" id="totalBar0" style="display:none">
+            <div><div class="order-total-label">Tổng tiền</div><div class="order-total-count" id="totalCount0"></div></div>
+            <div class="order-total-amount" id="totalAmount0"></div>
+          </div>
+          <div class="order-actions" id="orderActions0" style="display:none">
+            <button class="order-done-btn" onclick="clearOrder(0)">✓ Xong</button>
+            <button class="order-print-btn" onclick="printOrder(0)">🖨️</button>
+          </div>
+          <div class="empty-order" id="emptyOrder0"><div class="empty-icon">🛒</div><p>Chưa có sản phẩm nào<br>Tìm hoặc quét mã để thêm</p></div>
+        </div>
+        <div class="order-panel" id="panel1">
+          <div class="search-wrap" style="padding:12px 0 0;background:transparent">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="orderSearch1" placeholder="Tìm sản phẩm để thêm..." oninput="doOrderSearch(1)" autocomplete="off">
+            </div>
+            <button class="scan-btn" onclick="openCamera('order',1)">📷</button>
+          </div>
+          <div id="orderSearchResult1" style="background:#fff;border-radius:10px;margin-top:6px;overflow:hidden;box-shadow:var(--shadow);display:none"></div>
+          <div class="order-items" id="orderItems1"></div>
+          <div class="order-total-bar" id="totalBar1" style="display:none">
+            <div><div class="order-total-label">Tổng tiền</div><div class="order-total-count" id="totalCount1"></div></div>
+            <div class="order-total-amount" id="totalAmount1"></div>
+          </div>
+          <div class="order-actions" id="orderActions1" style="display:none">
+            <button class="order-done-btn" onclick="clearOrder(1)">✓ Xong</button>
+            <button class="order-print-btn" onclick="printOrder(1)">🖨️</button>
+          </div>
+          <div class="empty-order" id="emptyOrder1"><div class="empty-icon">🛒</div><p>Chưa có sản phẩm nào<br>Tìm hoặc quét mã để thêm</p></div>
+        </div>
+        <div class="order-panel" id="panel2">
+          <div class="search-wrap" style="padding:12px 0 0;background:transparent">
+            <div class="search-input-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="orderSearch2" placeholder="Tìm sản phẩm để thêm..." oninput="doOrderSearch(2)" autocomplete="off">
+            </div>
+            <button class="scan-btn" onclick="openCamera('order',2)">📷</button>
+          </div>
+          <div id="orderSearchResult2" style="background:#fff;border-radius:10px;margin-top:6px;overflow:hidden;box-shadow:var(--shadow);display:none"></div>
+          <div class="order-items" id="orderItems2"></div>
+          <div class="order-total-bar" id="totalBar2" style="display:none">
+            <div><div class="order-total-label">Tổng tiền</div><div class="order-total-count" id="totalCount2"></div></div>
+            <div class="order-total-amount" id="totalAmount2"></div>
+          </div>
+          <div class="order-actions" id="orderActions2" style="display:none">
+            <button class="order-done-btn" onclick="clearOrder(2)">✓ Xong</button>
+            <button class="order-print-btn" onclick="printOrder(2)">🖨️</button>
+          </div>
+          <div class="empty-order" id="emptyOrder2"><div class="empty-icon">🛒</div><p>Chưa có sản phẩm nào<br>Tìm hoặc quét mã để thêm</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: THÊM SẢN PHẨM (admin) -->
+    <div class="page" id="pageAdd">
+      <div class="form-section">
+        <div class="form-card">
+          <div class="form-title">➕ Thêm sản phẩm mới</div>
+          <div class="form-field">
+            <label>Tên sản phẩm *</label>
+            <input type="text" id="addName" placeholder="VD: Bia Tiger Bạc 330ml">
+          </div>
+          <div class="form-field">
+            <label>Danh mục *</label>
+            <select id="addCat"></select>
+          </div>
+          <div class="form-field">
+            <label>Tạo danh mục mới</label>
+            <div class="new-cat-wrap">
+              <input type="text" id="newCatInput" placeholder="Nhập tên danh mục mới">
+              <button class="new-cat-btn" onclick="addNewCategory()">+ Thêm</button>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Mã vạch *</label>
+            <div style="display:flex;gap:8px">
+              <input type="text" id="addBarcode" placeholder="Nhập hoặc quét mã vạch" style="flex:1">
+              <button class="scan-btn" onclick="openCamera('add')" style="border-radius:10px">📷</button>
+            </div>
+          </div>
+          <div class="form-field">
+            <label>Đơn vị *</label>
+            <input type="text" id="addUnit" placeholder="VD: lon, chai, gói, thùng...">
+          </div>
+          <div class="form-field">
+            <label>Giá theo gian hàng</label>
+            <div class="price-grid" id="addPriceGrid"></div>
+          </div>
+          <button class="form-submit" onclick="submitAddProduct()">💾 Lưu sản phẩm</button>
+          <div class="form-success" id="addSuccess">✅ Đã thêm sản phẩm thành công!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: QUẢN LÝ (admin) -->
+    <div class="page" id="pageManage">
+      <div class="manage-section">
+        <!-- Gian hàng -->
+        <div class="manage-card">
+          <div class="manage-card-title">🏪 Quản lý gian hàng</div>
+          <div class="store-list" id="storeList"></div>
+          <button class="add-store-btn" onclick="addStore()">+ Thêm gian hàng mới</button>
+        </div>
+
+        <!-- Đổi mật khẩu -->
+        <div class="manage-card">
+          <div class="manage-card-title">🔑 Đổi mật khẩu</div>
+          <div class="pw-field">
+            <label>Tài khoản</label>
+            <select id="pwAccount"></select>
+          </div>
+          <div class="pw-field">
+            <label>Mã PIN xác nhận</label>
+            <input type="password" id="pwPin" placeholder="Nhập mã PIN">
+          </div>
+          <div class="pw-field">
+            <label>Mật khẩu mới</label>
+            <input type="password" id="pwNew" placeholder="Nhập mật khẩu mới">
+          </div>
+          <button class="pw-save-btn" onclick="changePassword()">Đổi mật khẩu</button>
+          <div class="pw-msg" id="pwMsg"></div>
+        </div>
+
+        <!-- Danh sách sản phẩm -->
+        <div class="manage-card">
+          <div class="manage-card-title">📦 Tất cả sản phẩm (<span id="productCount">0</span>)</div>
+          <div id="manageProductList" style="max-height:300px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end page-content -->
+
+  <!-- Bottom nav -->
+  <div class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" onclick="switchPage('search',this)">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">Tra giá</span>
+    </button>
+    <button class="nav-item" onclick="switchPage('order',this)">
+      <span class="nav-icon">🛒</span>
+      <span class="nav-label">Lên đơn</span>
+      <span class="nav-badge" id="orderNavBadge"></span>
+    </button>
+    <button class="nav-item admin-nav" onclick="switchPage('add',this)" style="display:none">
+      <span class="nav-icon">➕</span>
+      <span class="nav-label">Thêm SP</span>
+    </button>
+    <button class="nav-item admin-nav" onclick="switchPage('manage',this)" style="display:none">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Quản lý</span>
+    </button>
+  </div>
+</div><!-- end #app -->
+
+<!-- Camera modal -->
+<div id="cameraModal">
+  <button class="camera-close" onclick="closeCamera()">✕</button>
+  <div class="camera-container">
+    <video id="cameraVideo" autoplay playsinline muted></video>
+    <canvas id="cameraCanvas"></canvas>
+    <div class="scan-overlay">
+      <div class="scan-frame">
+        <div class="scan-frame-tr"></div>
+        <div class="scan-frame-bl"></div>
+        <div class="scan-line"></div>
+      </div>
+    </div>
+  </div>
+  <div class="camera-status" id="cameraStatus">Đưa mã vạch vào khung để quét</div>
+  <div class="camera-manual">
+    <div class="camera-manual-label">Hoặc nhập mã vạch thủ công:</div>
+    <div class="camera-manual-row">
+      <input type="text" class="camera-manual-input" id="manualBarcode" placeholder="Nhập mã vạch..." inputmode="numeric">
+      <button class="camera-manual-ok" onclick="manualBarcodeOk()">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Print area -->
+<div id="printArea"></div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ===== DATA =====
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzipIiA2wz6ay4MSDRVg4P9JdC056Gs9f3zwsUne4ettAwDFvYoAnVhiNra87IvfnHz/exec';
+let accounts = [
+  {user:'taphoapm1',pass:'pm123',store:'taphoapm1',name:'Tạp Hoá PM 1'},
+  {user:'taphoapm2',pass:'pm123',store:'taphoapm2',name:'Tạp Hoá PM 2'},
+  {user:'taphoapm3',pass:'pm123',store:'taphoapm3',name:'Tạp Hoá PM 3'},
+  {user:'admin',pass:'Mo240219',store:'admin',name:'Admin'},
+];
+const PIN = '951753';
+
+let stores = [
+  {id:'taphoapm1',name:'Tạp Hoá PM 1'},
+  {id:'taphoapm2',name:'Tạp Hoá PM 2'},
+  {id:'taphoapm3',name:'Tạp Hoá PM 3'},
+];
+
+let categories = ['Bia','Nước ngọt','Sữa','Mì - Cháo','Bánh kẹo','Thuốc lá','Gia vị','Vệ sinh nhà cửa','Chăm sóc cá nhân','Kem & Đá','Cà phê'];
+
+// Helper tạo giá mặc định 0 cho tất cả store
+function mkPrice(){ return {taphoapm1:0,taphoapm2:0,taphoapm3:0}; }
+
+let products = [
+  // ===== BIA =====
+  // Tiger Bạc
+  {id:'p001',name:'Bia Tiger Bạc 330ml',cat:'Bia',barcode:'8888002083016',unit:'lon',prices:mkPrice()},
+  {id:'p002',name:'Bia Tiger Bạc 330ml',cat:'Bia',barcode:'8888002083023',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p003',name:'Bia Tiger Bạc 330ml',cat:'Bia',barcode:'8888002083030',unit:'thùng 24',prices:mkPrice()},
+  // Tiger Vàng
+  {id:'p004',name:'Bia Tiger Vàng 330ml',cat:'Bia',barcode:'8888002083100',unit:'lon',prices:mkPrice()},
+  {id:'p005',name:'Bia Tiger Vàng 330ml',cat:'Bia',barcode:'8888002083117',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p006',name:'Bia Tiger Vàng 330ml',cat:'Bia',barcode:'8888002083124',unit:'thùng 24',prices:mkPrice()},
+  // Tiger Crystal
+  {id:'p007',name:'Bia Tiger Crystal 330ml',cat:'Bia',barcode:'8888002083200',unit:'lon',prices:mkPrice()},
+  {id:'p008',name:'Bia Tiger Crystal 330ml',cat:'Bia',barcode:'8888002083217',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p009',name:'Bia Tiger Crystal 330ml',cat:'Bia',barcode:'8888002083224',unit:'thùng 24',prices:mkPrice()},
+  // Heineken Nguyên Bản
+  {id:'p010',name:'Bia Heineken Nguyên Bản 330ml',cat:'Bia',barcode:'8714300012779',unit:'lon',prices:mkPrice()},
+  {id:'p011',name:'Bia Heineken Nguyên Bản 330ml',cat:'Bia',barcode:'8714300012786',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p012',name:'Bia Heineken Nguyên Bản 330ml',cat:'Bia',barcode:'8714300012793',unit:'thùng 24',prices:mkPrice()},
+  // Heineken Silver
+  {id:'p013',name:'Bia Heineken Silver 330ml',cat:'Bia',barcode:'8714300364306',unit:'lon',prices:mkPrice()},
+  {id:'p014',name:'Bia Heineken Silver 330ml',cat:'Bia',barcode:'8714300364313',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p015',name:'Bia Heineken Silver 330ml',cat:'Bia',barcode:'8714300364320',unit:'thùng 24',prices:mkPrice()},
+  // Heineken 0.0
+  {id:'p016',name:'Bia Heineken 0.0 330ml',cat:'Bia',barcode:'8714300364405',unit:'lon',prices:mkPrice()},
+  {id:'p017',name:'Bia Heineken 0.0 330ml',cat:'Bia',barcode:'8714300364412',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p018',name:'Bia Heineken 0.0 330ml',cat:'Bia',barcode:'8714300364429',unit:'thùng 24',prices:mkPrice()},
+  // 333
+  {id:'p019',name:'Bia 333 Lager 330ml',cat:'Bia',barcode:'8934563100018',unit:'lon',prices:mkPrice()},
+  {id:'p020',name:'Bia 333 Lager 330ml',cat:'Bia',barcode:'8934563100025',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p021',name:'Bia 333 Lager 330ml',cat:'Bia',barcode:'8934563100032',unit:'thùng 24',prices:mkPrice()},
+  // Saigon Đỏ
+  {id:'p022',name:'Bia Saigon Đỏ 330ml',cat:'Bia',barcode:'8934563200015',unit:'lon',prices:mkPrice()},
+  {id:'p023',name:'Bia Saigon Đỏ 330ml',cat:'Bia',barcode:'8934563200022',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p024',name:'Bia Saigon Đỏ 330ml',cat:'Bia',barcode:'8934563200039',unit:'thùng 24',prices:mkPrice()},
+  // Saigon Special
+  {id:'p025',name:'Bia Saigon Special 330ml',cat:'Bia',barcode:'8934563200046',unit:'lon',prices:mkPrice()},
+  {id:'p026',name:'Bia Saigon Special 330ml',cat:'Bia',barcode:'8934563200053',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p027',name:'Bia Saigon Special 330ml',cat:'Bia',barcode:'8934563200060',unit:'thùng 24',prices:mkPrice()},
+  // Bến Thành
+  {id:'p028',name:'Bia Bến Thành Lager 330ml',cat:'Bia',barcode:'8934563300014',unit:'lon',prices:mkPrice()},
+  {id:'p029',name:'Bia Bến Thành Lager 330ml',cat:'Bia',barcode:'8934563300021',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p030',name:'Bia Bến Thành Lager 330ml',cat:'Bia',barcode:'8934563300038',unit:'thùng 24',prices:mkPrice()},
+  // Larue
+  {id:'p031',name:'Bia Larue 330ml',cat:'Bia',barcode:'8934563400013',unit:'lon',prices:mkPrice()},
+  {id:'p032',name:'Bia Larue 330ml',cat:'Bia',barcode:'8934563400020',unit:'vỉ 6',prices:mkPrice()},
+  {id:'p033',name:'Bia Larue 330ml',cat:'Bia',barcode:'8934563400037',unit:'thùng 24',prices:mkPrice()},
+
+  // ===== NƯỚC NGỌT =====
+  {id:'p034',name:'Nước Ngọt Coca-Cola 330ml',cat:'Nước ngọt',barcode:'5449000000996',unit:'lon',prices:mkPrice()},
+  {id:'p035',name:'Nước Ngọt Coca-Cola 330ml',cat:'Nước ngọt',barcode:'5449000000989',unit:'lốc 6',prices:mkPrice()},
+  {id:'p036',name:'Nước Ngọt Coca-Cola 330ml',cat:'Nước ngọt',barcode:'5449000000972',unit:'thùng 24',prices:mkPrice()},
+  {id:'p037',name:'Nước Ngọt Coca-Cola 1.5L',cat:'Nước ngọt',barcode:'5449000054227',unit:'chai',prices:mkPrice()},
+  {id:'p038',name:'Nước Ngọt Coca-Cola 1.5L',cat:'Nước ngọt',barcode:'5449000054210',unit:'lốc 6',prices:mkPrice()},
+  {id:'p039',name:'Nước Ngọt Coca-Cola 1.5L',cat:'Nước ngọt',barcode:'5449000054203',unit:'thùng 12',prices:mkPrice()},
+  {id:'p040',name:'Nước Ngọt Pepsi 330ml',cat:'Nước ngọt',barcode:'4895058500018',unit:'lon',prices:mkPrice()},
+  {id:'p041',name:'Nước Ngọt Pepsi 330ml',cat:'Nước ngọt',barcode:'4895058500025',unit:'lốc 6',prices:mkPrice()},
+  {id:'p042',name:'Nước Ngọt Pepsi 330ml',cat:'Nước ngọt',barcode:'4895058500032',unit:'thùng 24',prices:mkPrice()},
+  {id:'p043',name:'Nước Ngọt Pepsi 1.5L',cat:'Nước ngọt',barcode:'4895058500049',unit:'chai',prices:mkPrice()},
+  {id:'p044',name:'Nước Ngọt Pepsi 1.5L',cat:'Nước ngọt',barcode:'4895058500056',unit:'lốc 6',prices:mkPrice()},
+  {id:'p045',name:'Nước Ngọt Pepsi 1.5L',cat:'Nước ngọt',barcode:'4895058500063',unit:'thùng 12',prices:mkPrice()},
+  {id:'p046',name:'Nước Ngọt Sprite 330ml',cat:'Nước ngọt',barcode:'5449000054364',unit:'lon',prices:mkPrice()},
+  {id:'p047',name:'Nước Ngọt Sprite 330ml',cat:'Nước ngọt',barcode:'5449000054371',unit:'lốc 6',prices:mkPrice()},
+  {id:'p048',name:'Nước Ngọt Sprite 330ml',cat:'Nước ngọt',barcode:'5449000054388',unit:'thùng 24',prices:mkPrice()},
+  {id:'p049',name:'Nước Ngọt Fanta Cam 330ml',cat:'Nước ngọt',barcode:'5449000054401',unit:'lon',prices:mkPrice()},
+  {id:'p050',name:'Nước Ngọt Fanta Cam 330ml',cat:'Nước ngọt',barcode:'5449000054418',unit:'lốc 6',prices:mkPrice()},
+  {id:'p051',name:'Nước Ngọt Fanta Cam 330ml',cat:'Nước ngọt',barcode:'5449000054425',unit:'thùng 24',prices:mkPrice()},
+  {id:'p052',name:'Trà Xanh Không Độ 500ml',cat:'Nước ngọt',barcode:'8934804010018',unit:'chai',prices:mkPrice()},
+  {id:'p053',name:'Trà Xanh Không Độ 500ml',cat:'Nước ngọt',barcode:'8934804010025',unit:'lốc 6',prices:mkPrice()},
+  {id:'p054',name:'Trà Xanh Không Độ 500ml',cat:'Nước ngọt',barcode:'8934804010032',unit:'thùng 24',prices:mkPrice()},
+  {id:'p055',name:'Nước Tăng Lực Sting Dâu 330ml',cat:'Nước ngọt',barcode:'4895058900012',unit:'lon',prices:mkPrice()},
+  {id:'p056',name:'Nước Tăng Lực Sting Dâu 330ml',cat:'Nước ngọt',barcode:'4895058900029',unit:'lốc 6',prices:mkPrice()},
+  {id:'p057',name:'Nước Tăng Lực Sting Dâu 330ml',cat:'Nước ngọt',barcode:'4895058900036',unit:'thùng 24',prices:mkPrice()},
+  {id:'p058',name:'Nước Tăng Lực Sting Vàng 330ml',cat:'Nước ngọt',barcode:'4895058900043',unit:'lon',prices:mkPrice()},
+  {id:'p059',name:'Nước Tăng Lực Sting Vàng 330ml',cat:'Nước ngọt',barcode:'4895058900050',unit:'lốc 6',prices:mkPrice()},
+  {id:'p060',name:'Nước Tăng Lực Sting Vàng 330ml',cat:'Nước ngọt',barcode:'4895058900067',unit:'thùng 24',prices:mkPrice()},
+  {id:'p061',name:'Nước Suối Aquafina 500ml',cat:'Nước ngọt',barcode:'4895058100018',unit:'chai',prices:mkPrice()},
+  {id:'p062',name:'Nước Suối Aquafina 500ml',cat:'Nước ngọt',barcode:'4895058100025',unit:'thùng 24',prices:mkPrice()},
+  {id:'p063',name:'Nước Suối Aquafina 1.5L',cat:'Nước ngọt',barcode:'4895058100032',unit:'chai',prices:mkPrice()},
+  {id:'p064',name:'Nước Suối Lavie 500ml',cat:'Nước ngọt',barcode:'8934587700014',unit:'chai',prices:mkPrice()},
+  {id:'p065',name:'Nước Suối Lavie 500ml',cat:'Nước ngọt',barcode:'8934587700021',unit:'thùng 24',prices:mkPrice()},
+  {id:'p066',name:'Nước Suối Lavie 1.5L',cat:'Nước ngọt',barcode:'8934587700038',unit:'chai',prices:mkPrice()},
+  {id:'p067',name:'Nước Tăng Lực Number One 330ml',cat:'Nước ngọt',barcode:'8934804200012',unit:'lon',prices:mkPrice()},
+  {id:'p068',name:'Nước Tăng Lực Number One 330ml',cat:'Nước ngọt',barcode:'8934804200029',unit:'lốc 6',prices:mkPrice()},
+  {id:'p069',name:'Nước Tăng Lực Number One 330ml',cat:'Nước ngọt',barcode:'8934804200036',unit:'thùng 24',prices:mkPrice()},
+  {id:'p070',name:'Nước Tăng Lực Red Bull 250ml',cat:'Nước ngọt',barcode:'9002490100313',unit:'lon',prices:mkPrice()},
+  {id:'p071',name:'Nước Tăng Lực Red Bull 250ml',cat:'Nước ngọt',barcode:'9002490100320',unit:'lốc 6',prices:mkPrice()},
+  {id:'p072',name:'Nước Tăng Lực Red Bull 250ml',cat:'Nước ngọt',barcode:'9002490100337',unit:'thùng 24',prices:mkPrice()},
+
+  // ===== SỮA =====
+  {id:'p073',name:'Sữa Vinamilk Có Đường 180ml',cat:'Sữa',barcode:'8934673600014',unit:'hộp',prices:mkPrice()},
+  {id:'p074',name:'Sữa Vinamilk Có Đường 180ml',cat:'Sữa',barcode:'8934673600021',unit:'lốc 4',prices:mkPrice()},
+  {id:'p075',name:'Sữa Vinamilk Có Đường 180ml',cat:'Sữa',barcode:'8934673600038',unit:'thùng 48',prices:mkPrice()},
+  {id:'p076',name:'Sữa Vinamilk Không Đường 180ml',cat:'Sữa',barcode:'8934673600045',unit:'hộp',prices:mkPrice()},
+  {id:'p077',name:'Sữa Vinamilk Không Đường 180ml',cat:'Sữa',barcode:'8934673600052',unit:'lốc 4',prices:mkPrice()},
+  {id:'p078',name:'Sữa Vinamilk Không Đường 180ml',cat:'Sữa',barcode:'8934673600069',unit:'thùng 48',prices:mkPrice()},
+  {id:'p079',name:'Sữa Vinamilk Có Đường 1L',cat:'Sữa',barcode:'8934673600076',unit:'hộp',prices:mkPrice()},
+  {id:'p080',name:'Sữa Vinamilk Có Đường 1L',cat:'Sữa',barcode:'8934673600083',unit:'lốc 4',prices:mkPrice()},
+  {id:'p081',name:'Sữa Vinamilk Không Đường 1L',cat:'Sữa',barcode:'8934673600090',unit:'hộp',prices:mkPrice()},
+  {id:'p082',name:'Sữa Vinamilk Không Đường 1L',cat:'Sữa',barcode:'8934673600106',unit:'lốc 4',prices:mkPrice()},
+  {id:'p083',name:'Sữa TH True Milk Có Đường 180ml',cat:'Sữa',barcode:'8936014490014',unit:'hộp',prices:mkPrice()},
+  {id:'p084',name:'Sữa TH True Milk Có Đường 180ml',cat:'Sữa',barcode:'8936014490021',unit:'lốc 4',prices:mkPrice()},
+  {id:'p085',name:'Sữa TH True Milk Có Đường 180ml',cat:'Sữa',barcode:'8936014490038',unit:'thùng 48',prices:mkPrice()},
+  {id:'p086',name:'Sữa TH True Milk Không Đường 180ml',cat:'Sữa',barcode:'8936014490045',unit:'hộp',prices:mkPrice()},
+  {id:'p087',name:'Sữa TH True Milk Không Đường 180ml',cat:'Sữa',barcode:'8936014490052',unit:'lốc 4',prices:mkPrice()},
+  {id:'p088',name:'Sữa TH True Milk Dâu 180ml',cat:'Sữa',barcode:'8936014490069',unit:'hộp',prices:mkPrice()},
+  {id:'p089',name:'Sữa TH True Milk Dâu 180ml',cat:'Sữa',barcode:'8936014490076',unit:'lốc 4',prices:mkPrice()},
+  {id:'p090',name:'Sữa TH True Milk Chocolate 180ml',cat:'Sữa',barcode:'8936014490083',unit:'hộp',prices:mkPrice()},
+  {id:'p091',name:'Sữa TH True Milk Chocolate 180ml',cat:'Sữa',barcode:'8936014490090',unit:'lốc 4',prices:mkPrice()},
+  {id:'p092',name:'Sữa Dutch Lady Có Đường 180ml',cat:'Sữa',barcode:'8714100777014',unit:'hộp',prices:mkPrice()},
+  {id:'p093',name:'Sữa Dutch Lady Có Đường 180ml',cat:'Sữa',barcode:'8714100777021',unit:'lốc 4',prices:mkPrice()},
+  {id:'p094',name:'Sữa Dutch Lady Có Đường 180ml',cat:'Sữa',barcode:'8714100777038',unit:'thùng 48',prices:mkPrice()},
+  {id:'p095',name:'Sữa Dutch Lady Dâu 180ml',cat:'Sữa',barcode:'8714100777045',unit:'hộp',prices:mkPrice()},
+  {id:'p096',name:'Sữa Dutch Lady Dâu 180ml',cat:'Sữa',barcode:'8714100777052',unit:'lốc 4',prices:mkPrice()},
+  {id:'p097',name:'Sữa Dutch Lady Có Đường 1L',cat:'Sữa',barcode:'8714100777069',unit:'hộp',prices:mkPrice()},
+  {id:'p098',name:'Sữa Dutch Lady Có Đường 1L',cat:'Sữa',barcode:'8714100777076',unit:'lốc 4',prices:mkPrice()},
+  {id:'p099',name:'Sữa Mộc Châu Tươi Có Đường 180ml',cat:'Sữa',barcode:'8936020100014',unit:'hộp',prices:mkPrice()},
+  {id:'p100',name:'Sữa Mộc Châu Tươi Có Đường 180ml',cat:'Sữa',barcode:'8936020100021',unit:'lốc 4',prices:mkPrice()},
+  {id:'p101',name:'Sữa Mộc Châu Tươi Có Đường 180ml',cat:'Sữa',barcode:'8936020100038',unit:'thùng 48',prices:mkPrice()},
+
+  // ===== MÌ - CHÁO =====
+  {id:'p102',name:'Mì Hảo Hảo Tôm Chua Cay 75g',cat:'Mì - Cháo',barcode:'8934563911016',unit:'gói',prices:mkPrice()},
+  {id:'p103',name:'Mì Hảo Hảo Tôm Chua Cay 75g',cat:'Mì - Cháo',barcode:'8934563911023',unit:'lốc 5',prices:mkPrice()},
+  {id:'p104',name:'Mì Hảo Hảo Tôm Chua Cay 75g',cat:'Mì - Cháo',barcode:'8934563911030',unit:'thùng 30',prices:mkPrice()},
+  {id:'p105',name:'Mì Hảo Hảo Sa Tế Hành 75g',cat:'Mì - Cháo',barcode:'8934563911047',unit:'gói',prices:mkPrice()},
+  {id:'p106',name:'Mì Hảo Hảo Sa Tế Hành 75g',cat:'Mì - Cháo',barcode:'8934563911054',unit:'lốc 5',prices:mkPrice()},
+  {id:'p107',name:'Mì Hảo Hảo Sa Tế Hành 75g',cat:'Mì - Cháo',barcode:'8934563911061',unit:'thùng 30',prices:mkPrice()},
+  {id:'p108',name:'Mì 3 Miền Bò Hầm 65g',cat:'Mì - Cháo',barcode:'8934563711012',unit:'gói',prices:mkPrice()},
+  {id:'p109',name:'Mì 3 Miền Bò Hầm 65g',cat:'Mì - Cháo',barcode:'8934563711029',unit:'lốc 5',prices:mkPrice()},
+  {id:'p110',name:'Mì 3 Miền Bò Hầm 65g',cat:'Mì - Cháo',barcode:'8934563711036',unit:'thùng 30',prices:mkPrice()},
+  {id:'p111',name:'Mì Omachi Tôm Chua 80g',cat:'Mì - Cháo',barcode:'8934563811011',unit:'gói',prices:mkPrice()},
+  {id:'p112',name:'Mì Omachi Tôm Chua 80g',cat:'Mì - Cháo',barcode:'8934563811028',unit:'lốc 5',prices:mkPrice()},
+  {id:'p113',name:'Mì Omachi Tôm Chua 80g',cat:'Mì - Cháo',barcode:'8934563811035',unit:'thùng 30',prices:mkPrice()},
+  {id:'p114',name:'Mì Omachi Bò Hầm 80g',cat:'Mì - Cháo',barcode:'8934563811042',unit:'gói',prices:mkPrice()},
+  {id:'p115',name:'Mì Omachi Bò Hầm 80g',cat:'Mì - Cháo',barcode:'8934563811059',unit:'lốc 5',prices:mkPrice()},
+  {id:'p116',name:'Mì Omachi Bò Hầm 80g',cat:'Mì - Cháo',barcode:'8934563811066',unit:'thùng 30',prices:mkPrice()},
+  {id:'p117',name:'Mì Ly Hảo Hảo 67g',cat:'Mì - Cháo',barcode:'8934563911078',unit:'ly',prices:mkPrice()},
+  {id:'p118',name:'Mì Ly Hảo Hảo 67g',cat:'Mì - Cháo',barcode:'8934563911085',unit:'lốc 6',prices:mkPrice()},
+  {id:'p119',name:'Mì Ly Hảo Hảo 67g',cat:'Mì - Cháo',barcode:'8934563911092',unit:'thùng 24',prices:mkPrice()},
+
+  // ===== BÁNH KẸO =====
+  {id:'p120',name:'Bánh Chocopie Thường 520g',cat:'Bánh kẹo',barcode:'8801117200016',unit:'hộp',prices:mkPrice()},
+  {id:'p121',name:'Bánh Chocopie Thường 520g',cat:'Bánh kẹo',barcode:'8801117200023',unit:'lốc 2',prices:mkPrice()},
+  {id:'p122',name:'Bánh Chocopie Thường 520g',cat:'Bánh kẹo',barcode:'8801117200030',unit:'thùng 12',prices:mkPrice()},
+  {id:'p123',name:'Bánh Chocopie Dưa Hấu 520g',cat:'Bánh kẹo',barcode:'8801117200047',unit:'hộp',prices:mkPrice()},
+  {id:'p124',name:'Bánh Chocopie Dưa Hấu 520g',cat:'Bánh kẹo',barcode:'8801117200054',unit:'lốc 2',prices:mkPrice()},
+  {id:'p125',name:'Bánh Chocopie Dưa Hấu 520g',cat:'Bánh kẹo',barcode:'8801117200061',unit:'thùng 12',prices:mkPrice()},
+  {id:'p126',name:'Bánh Cosy Sữa 198g',cat:'Bánh kẹo',barcode:'8934563111013',unit:'hộp',prices:mkPrice()},
+  {id:'p127',name:'Bánh Cosy Sữa 198g',cat:'Bánh kẹo',barcode:'8934563111020',unit:'lốc 4',prices:mkPrice()},
+  {id:'p128',name:'Bánh Cosy Sữa 198g',cat:'Bánh kẹo',barcode:'8934563111037',unit:'thùng 24',prices:mkPrice()},
+  {id:'p129',name:'Bánh Cosy Marie 336g',cat:'Bánh kẹo',barcode:'8934563111044',unit:'hộp',prices:mkPrice()},
+  {id:'p130',name:'Bánh Cosy Marie 336g',cat:'Bánh kẹo',barcode:'8934563111051',unit:'lốc 4',prices:mkPrice()},
+  {id:'p131',name:'Bánh Cosy Marie 336g',cat:'Bánh kẹo',barcode:'8934563111068',unit:'thùng 24',prices:mkPrice()},
+  {id:'p132',name:'Bánh Orion Hướng Dương 480g',cat:'Bánh kẹo',barcode:'8801117300018',unit:'hộp',prices:mkPrice()},
+  {id:'p133',name:'Bánh Orion Hướng Dương 480g',cat:'Bánh kẹo',barcode:'8801117300025',unit:'lốc 2',prices:mkPrice()},
+  {id:'p134',name:'Bánh Orion Hướng Dương 480g',cat:'Bánh kẹo',barcode:'8801117300032',unit:'thùng 12',prices:mkPrice()},
+
+  // ===== THUỐC LÁ =====
+  {id:'p135',name:'Thuốc Lá Vinataba 10mg',cat:'Thuốc lá',barcode:'8934563510010',unit:'bao',prices:mkPrice()},
+  {id:'p136',name:'Thuốc Lá Vinataba 10mg',cat:'Thuốc lá',barcode:'8934563510027',unit:'tút 10',prices:mkPrice()},
+  {id:'p137',name:'Thuốc Lá Jet Đỏ',cat:'Thuốc lá',barcode:'8934563510034',unit:'bao',prices:mkPrice()},
+  {id:'p138',name:'Thuốc Lá Jet Đỏ',cat:'Thuốc lá',barcode:'8934563510041',unit:'tút 10',prices:mkPrice()},
+  {id:'p139',name:'Thuốc Lá Marlboro Đỏ',cat:'Thuốc lá',barcode:'0012300004500',unit:'bao',prices:mkPrice()},
+  {id:'p140',name:'Thuốc Lá Marlboro Đỏ',cat:'Thuốc lá',barcode:'0012300004517',unit:'tút 10',prices:mkPrice()},
+  {id:'p141',name:'Thuốc Lá Marlboro Gold',cat:'Thuốc lá',barcode:'0012300004524',unit:'bao',prices:mkPrice()},
+  {id:'p142',name:'Thuốc Lá Marlboro Gold',cat:'Thuốc lá',barcode:'0012300004531',unit:'tút 10',prices:mkPrice()},
+  {id:'p143',name:'Thuốc Lá Thăng Long Bạc',cat:'Thuốc lá',barcode:'8934563510048',unit:'bao',prices:mkPrice()},
+  {id:'p144',name:'Thuốc Lá Thăng Long Bạc',cat:'Thuốc lá',barcode:'8934563510055',unit:'tút 10',prices:mkPrice()},
+  {id:'p145',name:'Thuốc Lá Hero Đỏ',cat:'Thuốc lá',barcode:'8934563510062',unit:'bao',prices:mkPrice()},
+  {id:'p146',name:'Thuốc Lá Hero Đỏ',cat:'Thuốc lá',barcode:'8934563510079',unit:'tút 10',prices:mkPrice()},
+
+  // ===== GIA VỊ =====
+  {id:'p147',name:'Nước Mắm Chinsu 500ml',cat:'Gia vị',barcode:'8934804060013',unit:'chai',prices:mkPrice()},
+  {id:'p148',name:'Nước Mắm Chinsu 500ml',cat:'Gia vị',barcode:'8934804060020',unit:'lốc 6',prices:mkPrice()},
+  {id:'p149',name:'Nước Mắm Chinsu 500ml',cat:'Gia vị',barcode:'8934804060037',unit:'thùng 24',prices:mkPrice()},
+  {id:'p150',name:'Nước Mắm Chinsu 900ml',cat:'Gia vị',barcode:'8934804060044',unit:'chai',prices:mkPrice()},
+  {id:'p151',name:'Nước Mắm Chinsu 900ml',cat:'Gia vị',barcode:'8934804060051',unit:'lốc 6',prices:mkPrice()},
+  {id:'p152',name:'Nước Mắm Chinsu 900ml',cat:'Gia vị',barcode:'8934804060068',unit:'thùng 12',prices:mkPrice()},
+  {id:'p153',name:'Nước Tương Maggi 700ml',cat:'Gia vị',barcode:'6920175600014',unit:'chai',prices:mkPrice()},
+  {id:'p154',name:'Nước Tương Maggi 700ml',cat:'Gia vị',barcode:'6920175600021',unit:'lốc 6',prices:mkPrice()},
+  {id:'p155',name:'Nước Tương Maggi 700ml',cat:'Gia vị',barcode:'6920175600038',unit:'thùng 12',prices:mkPrice()},
+  {id:'p156',name:'Dầu Ăn Simply 1L',cat:'Gia vị',barcode:'8934804030016',unit:'chai',prices:mkPrice()},
+  {id:'p157',name:'Dầu Ăn Simply 1L',cat:'Gia vị',barcode:'8934804030023',unit:'lốc 4',prices:mkPrice()},
+  {id:'p158',name:'Dầu Ăn Simply 2L',cat:'Gia vị',barcode:'8934804030030',unit:'chai',prices:mkPrice()},
+  {id:'p159',name:'Dầu Ăn Simply 2L',cat:'Gia vị',barcode:'8934804030047',unit:'lốc 4',prices:mkPrice()},
+  {id:'p160',name:'Dầu Ăn Simply 2L',cat:'Gia vị',barcode:'8934804030054',unit:'thùng 8',prices:mkPrice()},
+  {id:'p161',name:'Muối Miwon 400g',cat:'Gia vị',barcode:'8934563210014',unit:'túi',prices:mkPrice()},
+  {id:'p162',name:'Muối Miwon 400g',cat:'Gia vị',barcode:'8934563210021',unit:'lốc 5',prices:mkPrice()},
+  {id:'p163',name:'Muối Miwon 400g',cat:'Gia vị',barcode:'8934563210038',unit:'thùng 30',prices:mkPrice()},
+  {id:'p164',name:'Bột Ngọt Ajinomoto 400g',cat:'Gia vị',barcode:'4901633007147',unit:'túi',prices:mkPrice()},
+  {id:'p165',name:'Bột Ngọt Ajinomoto 400g',cat:'Gia vị',barcode:'4901633007154',unit:'lốc 5',prices:mkPrice()},
+  {id:'p166',name:'Bột Ngọt Ajinomoto 400g',cat:'Gia vị',barcode:'4901633007161',unit:'thùng 30',prices:mkPrice()},
+  {id:'p167',name:'Hạt Nêm Knorr Gà 400g',cat:'Gia vị',barcode:'6920175700017',unit:'túi',prices:mkPrice()},
+  {id:'p168',name:'Hạt Nêm Knorr Gà 400g',cat:'Gia vị',barcode:'6920175700024',unit:'lốc 5',prices:mkPrice()},
+  {id:'p169',name:'Hạt Nêm Knorr Gà 400g',cat:'Gia vị',barcode:'6920175700031',unit:'thùng 30',prices:mkPrice()},
+
+  // ===== VỆ SINH =====
+  {id:'p170',name:'Nước Rửa Chén Sunlight Chanh 750ml',cat:'Vệ sinh',barcode:'8901030004018',unit:'chai',prices:mkPrice()},
+  {id:'p171',name:'Nước Rửa Chén Sunlight Chanh 750ml',cat:'Vệ sinh',barcode:'8901030004025',unit:'lốc 6',prices:mkPrice()},
+  {id:'p172',name:'Nước Rửa Chén Sunlight Chanh 750ml',cat:'Vệ sinh',barcode:'8901030004032',unit:'thùng 12',prices:mkPrice()},
+  {id:'p173',name:'Nước Rửa Chén Sunlight Chanh 1.5L',cat:'Vệ sinh',barcode:'8901030004049',unit:'chai',prices:mkPrice()},
+  {id:'p174',name:'Nước Rửa Chén Sunlight Chanh 1.5L',cat:'Vệ sinh',barcode:'8901030004056',unit:'lốc 4',prices:mkPrice()},
+  {id:'p175',name:'Nước Rửa Chén Sunlight Chanh 1.5L',cat:'Vệ sinh',barcode:'8901030004063',unit:'thùng 8',prices:mkPrice()},
+  {id:'p176',name:'Bột Giặt Omo Đậm Đặc 3.2kg',cat:'Vệ sinh',barcode:'8901030080010',unit:'túi',prices:mkPrice()},
+  {id:'p177',name:'Bột Giặt Omo Đậm Đặc 3.2kg',cat:'Vệ sinh',barcode:'8901030080027',unit:'lốc 2',prices:mkPrice()},
+  {id:'p178',name:'Bột Giặt Omo Đậm Đặc 3.2kg',cat:'Vệ sinh',barcode:'8901030080034',unit:'thùng 4',prices:mkPrice()},
+  {id:'p179',name:'Nước Xả Comfort Hồng 3.8L',cat:'Vệ sinh',barcode:'8901030090010',unit:'chai',prices:mkPrice()},
+  {id:'p180',name:'Nước Xả Comfort Hồng 3.8L',cat:'Vệ sinh',barcode:'8901030090027',unit:'lốc 2',prices:mkPrice()},
+  {id:'p181',name:'Nước Xả Comfort Hồng 3.8L',cat:'Vệ sinh',barcode:'8901030090034',unit:'thùng 4',prices:mkPrice()},
+  {id:'p182',name:'Dầu Gội Clear Mát Lạnh 650ml',cat:'Vệ sinh',barcode:'8901030200010',unit:'chai',prices:mkPrice()},
+  {id:'p183',name:'Dầu Gội Clear Mát Lạnh 650ml',cat:'Vệ sinh',barcode:'8901030200027',unit:'lốc 2',prices:mkPrice()},
+  {id:'p184',name:'Dầu Gội Clear Mát Lạnh 650ml',cat:'Vệ sinh',barcode:'8901030200034',unit:'thùng 12',prices:mkPrice()},
+  {id:'p185',name:'Sữa Tắm Lifebuoy 800g',cat:'Vệ sinh',barcode:'8901030300010',unit:'chai',prices:mkPrice()},
+  {id:'p186',name:'Sữa Tắm Lifebuoy 800g',cat:'Vệ sinh',barcode:'8901030300027',unit:'lốc 2',prices:mkPrice()},
+  {id:'p187',name:'Sữa Tắm Lifebuoy 800g',cat:'Vệ sinh',barcode:'8901030300034',unit:'thùng 12',prices:mkPrice()},
+  {id:'p188',name:'Kem Đánh Răng Colgate Triple 180g',cat:'Vệ sinh',barcode:'8850006403017',unit:'tuýp',prices:mkPrice()},
+  {id:'p189',name:'Kem Đánh Răng Colgate Triple 180g',cat:'Vệ sinh',barcode:'8850006403024',unit:'lốc 2',prices:mkPrice()},
+  {id:'p190',name:'Kem Đánh Răng Colgate Triple 180g',cat:'Vệ sinh',barcode:'8850006403031',unit:'thùng 12',prices:mkPrice()},
+
+  // ===== CÀ PHÊ =====
+  {id:'p191',name:'Cà Phê Nescafé 3in1 gói 20g',cat:'Cà phê',barcode:'6920175100013',unit:'gói',prices:mkPrice()},
+  {id:'p192',name:'Cà Phê Nescafé 3in1 gói 20g',cat:'Cà phê',barcode:'6920175100020',unit:'hộp 20',prices:mkPrice()},
+  {id:'p193',name:'Cà Phê Nescafé 3in1 gói 20g',cat:'Cà phê',barcode:'6920175100037',unit:'thùng 12',prices:mkPrice()},
+  {id:'p194',name:'Cà Phê G7 3in1 gói 16g',cat:'Cà phê',barcode:'8936016110015',unit:'gói',prices:mkPrice()},
+  {id:'p195',name:'Cà Phê G7 3in1 gói 16g',cat:'Cà phê',barcode:'8936016110022',unit:'hộp 18',prices:mkPrice()},
+  {id:'p196',name:'Cà Phê G7 3in1 gói 16g',cat:'Cà phê',barcode:'8936016110039',unit:'thùng 12',prices:mkPrice()},
+  {id:'p197',name:'Cà Phê Vinacafé 3in1 gói 20g',cat:'Cà phê',barcode:'8936016210017',unit:'gói',prices:mkPrice()},
+  {id:'p198',name:'Cà Phê Vinacafé 3in1 gói 20g',cat:'Cà phê',barcode:'8936016210024',unit:'hộp 24',prices:mkPrice()},
+  {id:'p199',name:'Cà Phê Vinacafé 3in1 gói 20g',cat:'Cà phê',barcode:'8936016210031',unit:'thùng 12',prices:mkPrice()},
+  // ===== VỆ SINH NHÀ CỬA =====
+  // Nước lau sàn Vim
+  {id:'p200',name:'Nước Lau Sàn Vim Hương Chanh 1L',cat:'Vệ sinh nhà cửa',barcode:'8901030410010',unit:'chai',prices:mkPrice()},
+  {id:'p201',name:'Nước Lau Sàn Vim Hương Chanh 1L',cat:'Vệ sinh nhà cửa',barcode:'8901030410027',unit:'lốc 4',prices:mkPrice()},
+  {id:'p202',name:'Nước Lau Sàn Vim Hương Chanh 1L',cat:'Vệ sinh nhà cửa',barcode:'8901030410034',unit:'thùng 12',prices:mkPrice()},
+  {id:'p203',name:'Nước Lau Sàn Vim Hương Lavender 1L',cat:'Vệ sinh nhà cửa',barcode:'8901030410041',unit:'chai',prices:mkPrice()},
+  {id:'p204',name:'Nước Lau Sàn Vim Hương Lavender 1L',cat:'Vệ sinh nhà cửa',barcode:'8901030410058',unit:'lốc 4',prices:mkPrice()},
+  {id:'p205',name:'Nước Lau Sàn Vim Hương Lavender 1L',cat:'Vệ sinh nhà cửa',barcode:'8901030410065',unit:'thùng 12',prices:mkPrice()},
+  // Nước lau sàn Gift
+  {id:'p206',name:'Nước Lau Sàn Gift Hương Hoa 1L',cat:'Vệ sinh nhà cửa',barcode:'8936047910010',unit:'chai',prices:mkPrice()},
+  {id:'p207',name:'Nước Lau Sàn Gift Hương Hoa 1L',cat:'Vệ sinh nhà cửa',barcode:'8936047910027',unit:'lốc 4',prices:mkPrice()},
+  {id:'p208',name:'Nước Lau Sàn Gift Hương Hoa 1L',cat:'Vệ sinh nhà cửa',barcode:'8936047910034',unit:'thùng 12',prices:mkPrice()},
+  // Tẩy bồn cầu Vim
+  {id:'p209',name:'Tẩy Bồn Cầu Vim Hương Chanh 500ml',cat:'Vệ sinh nhà cửa',barcode:'8901030420010',unit:'chai',prices:mkPrice()},
+  {id:'p210',name:'Tẩy Bồn Cầu Vim Hương Chanh 500ml',cat:'Vệ sinh nhà cửa',barcode:'8901030420027',unit:'lốc 4',prices:mkPrice()},
+  {id:'p211',name:'Tẩy Bồn Cầu Vim Hương Chanh 500ml',cat:'Vệ sinh nhà cửa',barcode:'8901030420034',unit:'thùng 12',prices:mkPrice()},
+  {id:'p212',name:'Tẩy Bồn Cầu Vim Thông Cống 500ml',cat:'Vệ sinh nhà cửa',barcode:'8901030420041',unit:'chai',prices:mkPrice()},
+  {id:'p213',name:'Tẩy Bồn Cầu Vim Thông Cống 500ml',cat:'Vệ sinh nhà cửa',barcode:'8901030420058',unit:'lốc 4',prices:mkPrice()},
+  {id:'p214',name:'Tẩy Bồn Cầu Vim Thông Cống 500ml',cat:'Vệ sinh nhà cửa',barcode:'8901030420065',unit:'thùng 12',prices:mkPrice()},
+  // Nước tẩy Javel
+  {id:'p215',name:'Nước Tẩy Javel Lix 1L',cat:'Vệ sinh nhà cửa',barcode:'8934756110010',unit:'chai',prices:mkPrice()},
+  {id:'p216',name:'Nước Tẩy Javel Lix 1L',cat:'Vệ sinh nhà cửa',barcode:'8934756110027',unit:'lốc 4',prices:mkPrice()},
+  {id:'p217',name:'Nước Tẩy Javel Lix 1L',cat:'Vệ sinh nhà cửa',barcode:'8934756110034',unit:'thùng 12',prices:mkPrice()},
+
+  // ===== CHĂM SÓC CÁ NHÂN =====
+  // Xà phòng Lifebuoy
+  {id:'p218',name:'Xà Phòng Lifebuoy Bảo Vệ 90g',cat:'Chăm sóc cá nhân',barcode:'8901030500010',unit:'bánh',prices:mkPrice()},
+  {id:'p219',name:'Xà Phòng Lifebuoy Bảo Vệ 90g',cat:'Chăm sóc cá nhân',barcode:'8901030500027',unit:'lốc 4',prices:mkPrice()},
+  {id:'p220',name:'Xà Phòng Lifebuoy Bảo Vệ 90g',cat:'Chăm sóc cá nhân',barcode:'8901030500034',unit:'thùng 24',prices:mkPrice()},
+  // Xà phòng Dove
+  {id:'p221',name:'Xà Phòng Dove Dưỡng Ẩm 90g',cat:'Chăm sóc cá nhân',barcode:'8901030510010',unit:'bánh',prices:mkPrice()},
+  {id:'p222',name:'Xà Phòng Dove Dưỡng Ẩm 90g',cat:'Chăm sóc cá nhân',barcode:'8901030510027',unit:'lốc 4',prices:mkPrice()},
+  {id:'p223',name:'Xà Phòng Dove Dưỡng Ẩm 90g',cat:'Chăm sóc cá nhân',barcode:'8901030510034',unit:'thùng 24',prices:mkPrice()},
+  // Xà phòng Camay
+  {id:'p224',name:'Xà Phòng Camay Hồng Cổ Điển 90g',cat:'Chăm sóc cá nhân',barcode:'8001841128610',unit:'bánh',prices:mkPrice()},
+  {id:'p225',name:'Xà Phòng Camay Hồng Cổ Điển 90g',cat:'Chăm sóc cá nhân',barcode:'8001841128627',unit:'lốc 4',prices:mkPrice()},
+  {id:'p226',name:'Xà Phòng Camay Hồng Cổ Điển 90g',cat:'Chăm sóc cá nhân',barcode:'8001841128634',unit:'thùng 24',prices:mkPrice()},
+  // Băng vệ sinh Whisper
+  {id:'p227',name:'Băng Vệ Sinh Whisper Mỏng Cánh 8 miếng',cat:'Chăm sóc cá nhân',barcode:'4902430153010',unit:'gói',prices:mkPrice()},
+  {id:'p228',name:'Băng Vệ Sinh Whisper Mỏng Cánh 8 miếng',cat:'Chăm sóc cá nhân',barcode:'4902430153027',unit:'lốc 4',prices:mkPrice()},
+  {id:'p229',name:'Băng Vệ Sinh Whisper Mỏng Cánh 8 miếng',cat:'Chăm sóc cá nhân',barcode:'4902430153034',unit:'thùng 24',prices:mkPrice()},
+  // Băng vệ sinh Diana
+  {id:'p230',name:'Băng Vệ Sinh Diana Siêu Mỏng 8 miếng',cat:'Chăm sóc cá nhân',barcode:'8934563611010',unit:'gói',prices:mkPrice()},
+  {id:'p231',name:'Băng Vệ Sinh Diana Siêu Mỏng 8 miếng',cat:'Chăm sóc cá nhân',barcode:'8934563611027',unit:'lốc 4',prices:mkPrice()},
+  {id:'p232',name:'Băng Vệ Sinh Diana Siêu Mỏng 8 miếng',cat:'Chăm sóc cá nhân',barcode:'8934563611034',unit:'thùng 24',prices:mkPrice()},
+  // Băng vệ sinh Kotex
+  {id:'p233',name:'Băng Vệ Sinh Kotex Style Siêu Mỏng 8 miếng',cat:'Chăm sóc cá nhân',barcode:'8901030610010',unit:'gói',prices:mkPrice()},
+  {id:'p234',name:'Băng Vệ Sinh Kotex Style Siêu Mỏng 8 miếng',cat:'Chăm sóc cá nhân',barcode:'8901030610027',unit:'lốc 4',prices:mkPrice()},
+  {id:'p235',name:'Băng Vệ Sinh Kotex Style Siêu Mỏng 8 miếng',cat:'Chăm sóc cá nhân',barcode:'8901030610034',unit:'thùng 24',prices:mkPrice()},
+  // Kem dưỡng Pond's
+  {id:'p236',name:'Kem Dưỡng Ponds Trắng Da 50g',cat:'Chăm sóc cá nhân',barcode:'8901030700010',unit:'hộp',prices:mkPrice()},
+  {id:'p237',name:'Kem Dưỡng Ponds Trắng Da 50g',cat:'Chăm sóc cá nhân',barcode:'8901030700027',unit:'lốc 6',prices:mkPrice()},
+  {id:'p238',name:'Kem Dưỡng Ponds Trắng Da 50g',cat:'Chăm sóc cá nhân',barcode:'8901030700034',unit:'thùng 24',prices:mkPrice()},
+  // Kem dưỡng Hazeline
+  {id:'p239',name:'Kem Dưỡng Hazeline Nghệ & Mật Ong 50g',cat:'Chăm sóc cá nhân',barcode:'8901030710010',unit:'hộp',prices:mkPrice()},
+  {id:'p240',name:'Kem Dưỡng Hazeline Nghệ & Mật Ong 50g',cat:'Chăm sóc cá nhân',barcode:'8901030710027',unit:'lốc 6',prices:mkPrice()},
+  {id:'p241',name:'Kem Dưỡng Hazeline Nghệ & Mật Ong 50g',cat:'Chăm sóc cá nhân',barcode:'8901030710034',unit:'thùng 24',prices:mkPrice()},
+  // Dầu gội Sunsilk
+  {id:'p242',name:'Dầu Gội Sunsilk Mềm Mượt 650ml',cat:'Chăm sóc cá nhân',barcode:'8901030800010',unit:'chai',prices:mkPrice()},
+  {id:'p243',name:'Dầu Gội Sunsilk Mềm Mượt 650ml',cat:'Chăm sóc cá nhân',barcode:'8901030800027',unit:'lốc 2',prices:mkPrice()},
+  {id:'p244',name:'Dầu Gội Sunsilk Mềm Mượt 650ml',cat:'Chăm sóc cá nhân',barcode:'8901030800034',unit:'thùng 12',prices:mkPrice()},
+  // Dầu gội Pantene
+  {id:'p245',name:'Dầu Gội Pantene Hư Tổn 650ml',cat:'Chăm sóc cá nhân',barcode:'8001841340110',unit:'chai',prices:mkPrice()},
+  {id:'p246',name:'Dầu Gội Pantene Hư Tổn 650ml',cat:'Chăm sóc cá nhân',barcode:'8001841340127',unit:'lốc 2',prices:mkPrice()},
+  {id:'p247',name:'Dầu Gội Pantene Hư Tổn 650ml',cat:'Chăm sóc cá nhân',barcode:'8001841340134',unit:'thùng 12',prices:mkPrice()},
+  // Sữa tắm Dove
+  {id:'p248',name:'Sữa Tắm Dove Dưỡng Ẩm 500ml',cat:'Chăm sóc cá nhân',barcode:'8901030900010',unit:'chai',prices:mkPrice()},
+  {id:'p249',name:'Sữa Tắm Dove Dưỡng Ẩm 500ml',cat:'Chăm sóc cá nhân',barcode:'8901030900027',unit:'lốc 2',prices:mkPrice()},
+  {id:'p250',name:'Sữa Tắm Dove Dưỡng Ẩm 500ml',cat:'Chăm sóc cá nhân',barcode:'8901030900034',unit:'thùng 12',prices:mkPrice()},
+  // Sữa tắm Romano
+  {id:'p251',name:'Sữa Tắm Romano Classic 520ml',cat:'Chăm sóc cá nhân',barcode:'8934563810010',unit:'chai',prices:mkPrice()},
+  {id:'p252',name:'Sữa Tắm Romano Classic 520ml',cat:'Chăm sóc cá nhân',barcode:'8934563810027',unit:'lốc 2',prices:mkPrice()},
+  {id:'p253',name:'Sữa Tắm Romano Classic 520ml',cat:'Chăm sóc cá nhân',barcode:'8934563810034',unit:'thùng 12',prices:mkPrice()},
+  // Kem đánh răng P/S
+  {id:'p254',name:'Kem Đánh Răng P/S Bảo Vệ 180g',cat:'Chăm sóc cá nhân',barcode:'8901030110010',unit:'tuýp',prices:mkPrice()},
+  {id:'p255',name:'Kem Đánh Răng P/S Bảo Vệ 180g',cat:'Chăm sóc cá nhân',barcode:'8901030110027',unit:'lốc 2',prices:mkPrice()},
+  {id:'p256',name:'Kem Đánh Răng P/S Bảo Vệ 180g',cat:'Chăm sóc cá nhân',barcode:'8901030110034',unit:'thùng 12',prices:mkPrice()},
+  // Kem đánh răng Sensodyne
+  {id:'p257',name:'Kem Đánh Răng Sensodyne Phục Hồi 100g',cat:'Chăm sóc cá nhân',barcode:'6223000270010',unit:'tuýp',prices:mkPrice()},
+  {id:'p258',name:'Kem Đánh Răng Sensodyne Phục Hồi 100g',cat:'Chăm sóc cá nhân',barcode:'6223000270027',unit:'lốc 2',prices:mkPrice()},
+  {id:'p259',name:'Kem Đánh Răng Sensodyne Phục Hồi 100g',cat:'Chăm sóc cá nhân',barcode:'6223000270034',unit:'thùng 12',prices:mkPrice()},
+
+  // ===== KEM & ĐÁ =====
+  // Merino
+  {id:'p260',name:'Kem Merino Socola 75ml',cat:'Kem & Đá',barcode:'8934563710010',unit:'cây',prices:mkPrice()},
+  {id:'p261',name:'Kem Merino Socola 75ml',cat:'Kem & Đá',barcode:'8934563710027',unit:'hộp 10',prices:mkPrice()},
+  {id:'p262',name:'Kem Merino Socola 75ml',cat:'Kem & Đá',barcode:'8934563710034',unit:'thùng 40',prices:mkPrice()},
+  {id:'p263',name:'Kem Merino Dâu 75ml',cat:'Kem & Đá',barcode:'8934563710041',unit:'cây',prices:mkPrice()},
+  {id:'p264',name:'Kem Merino Dâu 75ml',cat:'Kem & Đá',barcode:'8934563710058',unit:'hộp 10',prices:mkPrice()},
+  {id:'p265',name:'Kem Merino Dâu 75ml',cat:'Kem & Đá',barcode:'8934563710065',unit:'thùng 40',prices:mkPrice()},
+  {id:'p266',name:'Kem Merino Vani 75ml',cat:'Kem & Đá',barcode:'8934563710072',unit:'cây',prices:mkPrice()},
+  {id:'p267',name:'Kem Merino Vani 75ml',cat:'Kem & Đá',barcode:'8934563710089',unit:'hộp 10',prices:mkPrice()},
+  {id:'p268',name:'Kem Merino Vani 75ml',cat:'Kem & Đá',barcode:'8934563710096',unit:'thùng 40',prices:mkPrice()},
+  // Celano
+  {id:'p269',name:'Kem Celano Socola 80ml',cat:'Kem & Đá',barcode:'8934673710010',unit:'cây',prices:mkPrice()},
+  {id:'p270',name:'Kem Celano Socola 80ml',cat:'Kem & Đá',barcode:'8934673710027',unit:'hộp 10',prices:mkPrice()},
+  {id:'p271',name:'Kem Celano Socola 80ml',cat:'Kem & Đá',barcode:'8934673710034',unit:'thùng 40',prices:mkPrice()},
+  {id:'p272',name:'Kem Celano Dâu 80ml',cat:'Kem & Đá',barcode:'8934673710041',unit:'cây',prices:mkPrice()},
+  {id:'p273',name:'Kem Celano Dâu 80ml',cat:'Kem & Đá',barcode:'8934673710058',unit:'hộp 10',prices:mkPrice()},
+  {id:'p274',name:'Kem Celano Dâu 80ml',cat:'Kem & Đá',barcode:'8934673710065',unit:'thùng 40',prices:mkPrice()},
+  {id:'p275',name:'Kem Celano Phô Mai 80ml',cat:'Kem & Đá',barcode:'8934673710072',unit:'cây',prices:mkPrice()},
+  {id:'p276',name:'Kem Celano Phô Mai 80ml',cat:'Kem & Đá',barcode:'8934673710089',unit:'hộp 10',prices:mkPrice()},
+  {id:'p277',name:'Kem Celano Phô Mai 80ml',cat:'Kem & Đá',barcode:'8934673710096',unit:'thùng 40',prices:mkPrice()},
+  // Tràng Tiền
+  {id:'p278',name:'Kem Tràng Tiền Socola 60ml',cat:'Kem & Đá',barcode:'8935001710010',unit:'cây',prices:mkPrice()},
+  {id:'p279',name:'Kem Tràng Tiền Socola 60ml',cat:'Kem & Đá',barcode:'8935001710027',unit:'hộp 10',prices:mkPrice()},
+  {id:'p280',name:'Kem Tràng Tiền Socola 60ml',cat:'Kem & Đá',barcode:'8935001710034',unit:'thùng 40',prices:mkPrice()},
+  {id:'p281',name:'Kem Tràng Tiền Cốm 60ml',cat:'Kem & Đá',barcode:'8935001710041',unit:'cây',prices:mkPrice()},
+  {id:'p282',name:'Kem Tràng Tiền Cốm 60ml',cat:'Kem & Đá',barcode:'8935001710058',unit:'hộp 10',prices:mkPrice()},
+  {id:'p283',name:'Kem Tràng Tiền Cốm 60ml',cat:'Kem & Đá',barcode:'8935001710065',unit:'thùng 40',prices:mkPrice()},
+  {id:'p284',name:'Kem Tràng Tiền Dâu 60ml',cat:'Kem & Đá',barcode:'8935001710072',unit:'cây',prices:mkPrice()},
+  {id:'p285',name:'Kem Tràng Tiền Dâu 60ml',cat:'Kem & Đá',barcode:'8935001710089',unit:'hộp 10',prices:mkPrice()},
+  {id:'p286',name:'Kem Tràng Tiền Dâu 60ml',cat:'Kem & Đá',barcode:'8935001710096',unit:'thùng 40',prices:mkPrice()},
+
+  // ===== THUỐC LÁ BỔ SUNG =====
+  // Camel
+  {id:'p287',name:'Thuốc Lá Camel Đỏ',cat:'Thuốc lá',barcode:'0075614504010',unit:'bao',prices:mkPrice()},
+  {id:'p288',name:'Thuốc Lá Camel Đỏ',cat:'Thuốc lá',barcode:'0075614504027',unit:'tút 10',prices:mkPrice()},
+  {id:'p289',name:'Thuốc Lá Camel Blue',cat:'Thuốc lá',barcode:'0075614504034',unit:'bao',prices:mkPrice()},
+  {id:'p290',name:'Thuốc Lá Camel Blue',cat:'Thuốc lá',barcode:'0075614504041',unit:'tút 10',prices:mkPrice()},
+  // Sài Gòn
+  {id:'p291',name:'Thuốc Lá Sài Gòn Bạc',cat:'Thuốc lá',barcode:'8934563520010',unit:'bao',prices:mkPrice()},
+  {id:'p292',name:'Thuốc Lá Sài Gòn Bạc',cat:'Thuốc lá',barcode:'8934563520027',unit:'tút 10',prices:mkPrice()},
+  {id:'p293',name:'Thuốc Lá Sài Gòn Bạc Hà',cat:'Thuốc lá',barcode:'8934563520034',unit:'bao',prices:mkPrice()},
+  {id:'p294',name:'Thuốc Lá Sài Gòn Bạc Hà',cat:'Thuốc lá',barcode:'8934563520041',unit:'tút 10',prices:mkPrice()},
+  {id:'p295',name:'Thuốc Lá Sài Gòn Dưa',cat:'Thuốc lá',barcode:'8934563520048',unit:'bao',prices:mkPrice()},
+  {id:'p296',name:'Thuốc Lá Sài Gòn Dưa',cat:'Thuốc lá',barcode:'8934563520055',unit:'tút 10',prices:mkPrice()},
+  {id:'p297',name:'Thuốc Lá Sài Gòn Đào',cat:'Thuốc lá',barcode:'8934563520062',unit:'bao',prices:mkPrice()},
+  {id:'p298',name:'Thuốc Lá Sài Gòn Đào',cat:'Thuốc lá',barcode:'8934563520079',unit:'tút 10',prices:mkPrice()},
+  {id:'p299',name:'Thuốc Lá Sài Gòn Vàng',cat:'Thuốc lá',barcode:'8934563520086',unit:'bao',prices:mkPrice()},
+  {id:'p300',name:'Thuốc Lá Sài Gòn Vàng',cat:'Thuốc lá',barcode:'8934563520093',unit:'tút 10',prices:mkPrice()},
+  // 555
+  {id:'p301',name:'Thuốc Lá 555 Nội Địa Ngắn',cat:'Thuốc lá',barcode:'5060022110010',unit:'bao',prices:mkPrice()},
+  {id:'p302',name:'Thuốc Lá 555 Nội Địa Ngắn',cat:'Thuốc lá',barcode:'5060022110027',unit:'tút 10',prices:mkPrice()},
+  {id:'p303',name:'Thuốc Lá 555 Nội Địa Dài',cat:'Thuốc lá',barcode:'5060022110034',unit:'bao',prices:mkPrice()},
+  {id:'p304',name:'Thuốc Lá 555 Nội Địa Dài',cat:'Thuốc lá',barcode:'5060022110041',unit:'tút 10',prices:mkPrice()},
+  {id:'p305',name:'Thuốc Lá 555 Bạc',cat:'Thuốc lá',barcode:'5060022110048',unit:'bao',prices:mkPrice()},
+  {id:'p306',name:'Thuốc Lá 555 Bạc',cat:'Thuốc lá',barcode:'5060022110055',unit:'tút 10',prices:mkPrice()},
+  {id:'p307',name:'Thuốc Lá 555 Mỏng',cat:'Thuốc lá',barcode:'5060022110062',unit:'bao',prices:mkPrice()},
+  {id:'p308',name:'Thuốc Lá 555 Mỏng',cat:'Thuốc lá',barcode:'5060022110079',unit:'tút 10',prices:mkPrice()},
+  {id:'p309',name:'Thuốc Lá 555 Vuông',cat:'Thuốc lá',barcode:'5060022110086',unit:'bao',prices:mkPrice()},
+  {id:'p310',name:'Thuốc Lá 555 Vuông',cat:'Thuốc lá',barcode:'5060022110093',unit:'tút 10',prices:mkPrice()},
+  {id:'p311',name:'Thuốc Lá 555 Xuất Khẩu Ngắn',cat:'Thuốc lá',barcode:'5060022120010',unit:'bao',prices:mkPrice()},
+  {id:'p312',name:'Thuốc Lá 555 Xuất Khẩu Ngắn',cat:'Thuốc lá',barcode:'5060022120027',unit:'tút 10',prices:mkPrice()},
+  {id:'p313',name:'Thuốc Lá 555 Xuất Khẩu Dài',cat:'Thuốc lá',barcode:'5060022120034',unit:'bao',prices:mkPrice()},
+  {id:'p314',name:'Thuốc Lá 555 Xuất Khẩu Dài',cat:'Thuốc lá',barcode:'5060022120041',unit:'tút 10',prices:mkPrice()},
+
+  // ===== GIA VỊ BỔ SUNG =====
+  // Bột canh
+  {id:'p315',name:'Bột Canh Iốt Miwon 200g',cat:'Gia vị',barcode:'8934563220010',unit:'gói',prices:mkPrice()},
+  {id:'p316',name:'Bột Canh Iốt Miwon 200g',cat:'Gia vị',barcode:'8934563220027',unit:'lốc 5',prices:mkPrice()},
+  {id:'p317',name:'Bột Canh Iốt Miwon 200g',cat:'Gia vị',barcode:'8934563220034',unit:'thùng 30',prices:mkPrice()},
+  // Hạt nêm Maggi
+  {id:'p318',name:'Hạt Nêm Maggi Thịt Thăn 400g',cat:'Gia vị',barcode:'6920175800010',unit:'túi',prices:mkPrice()},
+  {id:'p319',name:'Hạt Nêm Maggi Thịt Thăn 400g',cat:'Gia vị',barcode:'6920175800027',unit:'lốc 5',prices:mkPrice()},
+  {id:'p320',name:'Hạt Nêm Maggi Thịt Thăn 400g',cat:'Gia vị',barcode:'6920175800034',unit:'thùng 30',prices:mkPrice()},
+  // Nước tương Maggi
+  {id:'p321',name:'Nước Tương Maggi Đậu Nành 200ml',cat:'Gia vị',barcode:'6920175600045',unit:'chai',prices:mkPrice()},
+  {id:'p322',name:'Nước Tương Maggi Đậu Nành 200ml',cat:'Gia vị',barcode:'6920175600052',unit:'lốc 6',prices:mkPrice()},
+  {id:'p323',name:'Nước Tương Maggi Đậu Nành 200ml',cat:'Gia vị',barcode:'6920175600069',unit:'thùng 24',prices:mkPrice()},
+  // Tương ớt Chinsu
+  {id:'p324',name:'Tương Ớt Chinsu 250g',cat:'Gia vị',barcode:'8934804070010',unit:'chai',prices:mkPrice()},
+  {id:'p325',name:'Tương Ớt Chinsu 250g',cat:'Gia vị',barcode:'8934804070027',unit:'lốc 6',prices:mkPrice()},
+  {id:'p326',name:'Tương Ớt Chinsu 250g',cat:'Gia vị',barcode:'8934804070034',unit:'thùng 24',prices:mkPrice()},
+  // Gói tẩm ướp BBQ Aji-ngon
+  {id:'p327',name:'Gia Vị Tẩm Ướp Aji-ngon Nướng BBQ 30g',cat:'Gia vị',barcode:'4901633100010',unit:'gói',prices:mkPrice()},
+  {id:'p328',name:'Gia Vị Tẩm Ướp Aji-ngon Nướng BBQ 30g',cat:'Gia vị',barcode:'4901633100027',unit:'hộp 12',prices:mkPrice()},
+  {id:'p329',name:'Gia Vị Tẩm Ướp Aji-ngon Nướng BBQ 30g',cat:'Gia vị',barcode:'4901633100034',unit:'thùng 48',prices:mkPrice()},
+  // Gói tẩm ướp gà chiên
+  {id:'p330',name:'Gia Vị Tẩm Ướp Aji-ngon Gà Chiên 30g',cat:'Gia vị',barcode:'4901633100041',unit:'gói',prices:mkPrice()},
+  {id:'p331',name:'Gia Vị Tẩm Ướp Aji-ngon Gà Chiên 30g',cat:'Gia vị',barcode:'4901633100058',unit:'hộp 12',prices:mkPrice()},
+  {id:'p332',name:'Gia Vị Tẩm Ướp Aji-ngon Gà Chiên 30g',cat:'Gia vị',barcode:'4901633100065',unit:'thùng 48',prices:mkPrice()},
+  // Knorr Bò Hầm
+  {id:'p333',name:'Gia Vị Knorr Bò Hầm 30g',cat:'Gia vị',barcode:'6920175700048',unit:'gói',prices:mkPrice()},
+  {id:'p334',name:'Gia Vị Knorr Bò Hầm 30g',cat:'Gia vị',barcode:'6920175700055',unit:'hộp 12',prices:mkPrice()},
+  {id:'p335',name:'Gia Vị Knorr Bò Hầm 30g',cat:'Gia vị',barcode:'6920175700062',unit:'thùng 48',prices:mkPrice()},
+
+];
+
+// LocalStorage persistence
+const LS_KEY = 'taphoapm_data';
+function saveToStorage(){
+  try{
+    let data = {
+      products: products,
+      categories: categories,
+      stores: stores,
+      accounts: accounts.map(a=>({user:a.user,pass:a.pass,store:a.store,name:a.name}))
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+  }catch(e){}
+}
+function loadFromStorage(){
+  try{
+    let raw = localStorage.getItem(LS_KEY);
+    if(!raw) return;
+    let data = JSON.parse(raw);
+    if(data.products && data.products.length > 0) products = data.products;
+    if(data.categories && data.categories.length > 0) categories = data.categories;
+    if(data.stores && data.stores.length > 0) stores = data.stores;
+    if(data.accounts && data.accounts.length > 0) accounts = data.accounts;
+  }catch(e){}
+}
+
+// Build barcode map
+let barcodeMap = {};
+products.forEach(p => barcodeMap[p.barcode] = p);
+
+// ===== STATE =====
+let currentUser = null;
+let currentPage = 'search';
+let activeTab = 0;
+let currentCat = 'Tất cả';
+let selectedProduct = null;
+let orders = [[],[],[]]; // 3 đơn
+
+// Camera state
+let cameraStream = null;
+let cameraTimer = null;
+let cameraMode = 'search';
+let cameraOrderIndex = 0;
+let zbarReady = false;
+
+// ===== INIT =====
+window.onload = function(){
+  // Load data từ localStorage
+  loadFromStorage();
+  // Rebuild barcodeMap sau khi load
+  barcodeMap = {};
+  products.forEach(p => barcodeMap[p.barcode] = p);
+  // Force ẩn app, hiện login
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+
+  // Check zbar
+  if(window.zbarWasm){ zbarReady=true; }
+  else {
+    let checkZ = setInterval(()=>{
+      if(window.zbarWasm){ zbarReady=true; clearInterval(checkZ); }
+    },300);
+  }
+};
+
+// ===== AUTH =====
+function doLogin(){
+  let u = document.getElementById('loginUser').value.trim().toLowerCase();
+  let p = document.getElementById('loginPass').value;
+  let acc = accounts.find(a=>a.user===u && a.pass===p);
+  if(!acc){
+    document.getElementById('loginError').style.display='block';
+    return;
+  }
+  currentUser = acc;
+  document.getElementById('loginError').style.display='none';
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='flex';
+  setupUI();
+}
+
+document.getElementById('loginPass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});
+document.getElementById('loginUser').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('loginPass').focus()});
+
+function doLogout(){
+  currentUser=null;
+  document.getElementById('loginUser').value='';
+  document.getElementById('loginPass').value='';
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  closeCamera();
+}
+
+function isAdmin(){ return currentUser && currentUser.store==='admin'; }
+
+async function loadPricesFromSheets(){
+  try{
+    // Load giá
+    let resp = await fetch(APPS_SCRIPT_URL + '?action=getPrices');
+    let priceData = await resp.json();
+    if(priceData && typeof priceData === 'object' && !priceData.error){
+      products.forEach(p=>{
+        if(priceData[p.barcode]){
+          stores.forEach(s=>{
+            if(priceData[p.barcode][s.id] !== undefined){
+              p.prices[s.id] = priceData[p.barcode][s.id];
+            }
+          });
+        }
+      });
+    }
+    // Load sản phẩm mới từ Sheets
+    let resp2 = await fetch(APPS_SCRIPT_URL + '?action=getProducts');
+    let newProds = await resp2.json();
+    if(Array.isArray(newProds) && newProds.length > 0){
+      newProds.forEach(np=>{
+        if(!barcodeMap[np.barcode]){
+          // Thêm sản phẩm mới chưa có trong list gốc
+          let prices = {};
+          stores.forEach(s=>prices[s.id]=0);
+          // Lấy giá từ Sheets nếu có
+          if(priceData && priceData[np.barcode]){
+            stores.forEach(s=>{ prices[s.id]=priceData[np.barcode][s.id]||0; });
+          }
+          let newP = {id:np.id,name:np.name,cat:np.cat,barcode:np.barcode,unit:np.unit,prices,_fromSheets:true};
+          products.push(newP);
+          barcodeMap[np.barcode]=newP;
+          if(!categories.includes(np.cat)) categories.push(np.cat);
+        } else {
+          // Cập nhật tên/danh mục/đơn vị nếu đã sửa
+          let existing = barcodeMap[np.barcode];
+          existing.name = np.name;
+          existing.cat = np.cat;
+          existing.unit = np.unit;
+        }
+      });
+      // Xoá sản phẩm đã xoá trên Sheets (chỉ xoá các SP có _fromSheets)
+      let sheetBarcodes = new Set(newProds.map(p=>p.barcode));
+      products = products.filter(p => !p._fromSheets || sheetBarcodes.has(p.barcode));
+    }
+    // Rebuild barcodeMap
+    barcodeMap = {};
+    products.forEach(p => barcodeMap[p.barcode] = p);
+    saveToStorage();
+  } catch(e){
+    // Nếu không load được thì dùng localStorage
+    console.log('Load from Sheets failed:', e);
+    throw e; // Re-throw để caller biết thất bại
+  }
+}
+
+async function setupUI(){
+  document.getElementById('topBarTitle').textContent = isAdmin()?'Admin — Tạp Hoá PM':currentUser.name;
+  document.getElementById('topBarSub').textContent = '⏳ Đang tải giá...';
+  document.getElementById('adminBadge').style.display = isAdmin()?'inline':'none';
+
+  // Admin nav
+  document.querySelectorAll('.admin-nav').forEach(el=>el.style.display=isAdmin()?'flex':'none');
+
+  // Hiện màn loading trước
+  document.getElementById('searchResult').innerHTML=`<div class="no-result"><div class="no-icon">⏳</div><p>Đang tải dữ liệu mới nhất từ máy chủ...</p></div>`;
+
+  // Luôn fetch từ Sheets trước, render sau
+  try{
+    await loadPricesFromSheets();
+    document.getElementById('topBarSub').textContent = isAdmin()?'Toàn quyền quản lý':'✅ Giá đã cập nhật';
+    showToast('Đã tải giá mới nhất!','green');
+  } catch(e){
+    document.getElementById('topBarSub').textContent = isAdmin()?'Toàn quyền quản lý':'⚠️ Dùng dữ liệu cũ';
+    showToast('Không kết nối được, dùng dữ liệu cũ','');
+  }
+
+  renderCatFilter();
+  renderSearch();
+  if(isAdmin()){
+    renderAddForm();
+    renderManage();
+  }
+}
+
+// ===== TRA GIÁ =====
+function renderCatFilter(){
+  let cats = ['Tất cả',...categories];
+  let html = cats.map(c=>`<button class="cat-chip${c===currentCat?' active':''}" onclick="filterCat('${c}')">${c}</button>`).join('');
+  document.getElementById('catFilter').innerHTML = html;
+}
+
+function filterCat(cat){
+  currentCat = cat;
+  renderCatFilter();
+  doSearch();
+}
+
+function doSearch(){
+  let q = document.getElementById('searchInput').value.trim().toLowerCase();
+  let filtered = products.filter(p=>{
+    let matchCat = currentCat==='Tất cả' || p.cat===currentCat;
+    let matchQ = !q || p.name.toLowerCase().includes(q) || p.barcode.includes(q);
+    return matchCat && matchQ;
+  });
+  renderSearchResult(filtered, q);
+}
+
+function renderSearchResult(list, q){
+  let el = document.getElementById('searchResult');
+  if(!list.length){
+    el.innerHTML=`<div class="no-result"><div class="no-icon">😕</div><p>Không tìm thấy sản phẩm phù hợp</p></div>`;
+    return;
+  }
+  let storeKey = isAdmin()?null:currentUser.store;
+  let html = `<div class="product-list">`;
+  list.forEach(p=>{
+    let price = isAdmin()?null:p.prices[storeKey];
+    let priceHtml = isAdmin()?'':formatPrice(price);
+    html+=`<div class="product-card${selectedProduct&&selectedProduct.id===p.id?' selected':''}" onclick="showProduct('${p.id}')">
+      <div class="product-card-header">
+        <div class="product-name">${p.name}</div>
+        ${!isAdmin()?`<div class="product-price">${priceHtml}</div>`:''}
+      </div>
+      <div class="product-meta">
+        <span class="product-unit">${p.unit}</span>
+        <span class="product-barcode">${p.barcode}</span>
+        <span class="product-cat">${p.cat}</span>
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+  el.innerHTML=html;
+  // Show selected detail
+  if(selectedProduct){
+    let found = list.find(p=>p.id===selectedProduct.id);
+    if(found) renderProductDetail(found);
+  }
+}
+
+function showProduct(pid){
+  let p = products.find(x=>x.id===pid);
+  if(!p) return;
+  selectedProduct = p;
+  renderProductDetailModal(p);
+}
+
+function renderProductDetailModal(p){
+  let storeKey = isAdmin()?null:currentUser.store;
+  let price = isAdmin()?null:p.prices[storeKey];
+  let modal = document.getElementById('productDetailModal');
+  if(!modal){
+    modal = document.createElement('div');
+    modal.id='productDetailModal';
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+    modal.onclick=function(e){if(e.target===modal)closeProductDetail()};
+    document.body.appendChild(modal);
+  }
+
+  let adminPriceHtml='';
+  if(isAdmin()){
+    adminPriceHtml=`<div class="price-edit-section">
+      <div class="price-edit-title">Chỉnh giá theo gian hàng</div>`;
+    stores.forEach(s=>{
+      adminPriceHtml+=`<div class="price-edit-row">
+        <div class="price-edit-label">${s.name}</div>
+        <input class="price-edit-input" type="number" id="pe_${s.id}" value="${p.prices[s.id]||0}" placeholder="0">
+        <button class="price-save-btn" onclick="savePrice('${p.id}','${s.id}')">Lưu</button>
+      </div>`;
+    });
+    adminPriceHtml+=`</div>`;
+  }
+
+  modal.innerHTML=`<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto">
+    <div style="width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 16px"></div>
+    <div class="detail-name">${p.name}</div>
+    ${!isAdmin()?`<div class="detail-price-row"><div class="detail-price">${formatPrice(price)}</div><div class="detail-unit">/ ${p.unit}</div></div>`:''}
+    <div class="detail-barcode">Mã: ${p.barcode}</div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <span class="product-unit">${p.unit}</span>
+      <span class="product-cat">${p.cat}</span>
+    </div>
+    ${adminPriceHtml}
+    <button class="detail-close" style="width:100%;margin-top:16px" onclick="closeProductDetail()">Đóng</button>
+  </div>`;
+  modal.style.display='flex';
+}
+
+function closeProductDetail(){
+  let m=document.getElementById('productDetailModal');
+  if(m) m.style.display='none';
+  selectedProduct=null;
+}
+
+async function savePrice(pid,sid){
+  let val = parseInt(document.getElementById(`pe_${sid}`).value)||0;
+  let p = products.find(x=>x.id===pid);
+  if(!p) return;
+  p.prices[sid]=val;
+  saveToStorage();
+  showToast('Đang lưu...','');
+  try{
+    let resp = await fetch(APPS_SCRIPT_URL, {
+      method:'POST',
+      body: JSON.stringify({action:'savePrice', barcode:p.barcode, store:sid, price:val})
+    });
+    let result = await resp.json();
+    if(result.ok) showToast('Đã lưu giá!','green');
+    else showToast('Lưu local, chưa sync!','');
+  } catch(e){
+    showToast('Lưu local, chưa sync!','');
+  }
+}
+
+// ===== LÊN ĐƠN =====
+function switchTab(i){
+  activeTab=i;
+  document.querySelectorAll('.order-tab').forEach((t,idx)=>t.classList.toggle('active',idx===i));
+  document.querySelectorAll('.order-panel').forEach((p,idx)=>p.classList.toggle('active',idx===i));
+}
+
+function doOrderSearch(tabIdx){
+  let q = document.getElementById(`orderSearch${tabIdx}`).value.trim().toLowerCase();
+  let res = document.getElementById(`orderSearchResult${tabIdx}`);
+  if(!q){ res.style.display='none'; return; }
+  let storeKey = isAdmin()?stores[0].id:currentUser.store;
+  let found = products.filter(p=>p.name.toLowerCase().includes(q)||p.barcode.includes(q)).slice(0,6);
+  if(!found.length){ res.style.display='none'; return; }
+  res.style.display='block';
+  res.innerHTML=found.map(p=>`<div style="padding:11px 14px;border-bottom:1px solid #f3f4f6;cursor:pointer;display:flex;justify-content:space-between;align-items:center" onclick="addToOrder(${tabIdx},'${p.id}')">
+    <div>
+      <div style="font-size:14px;font-weight:600;color:#111827">${p.name}</div>
+      <div style="font-size:12px;color:#9ca3af">${p.unit} · ${p.barcode}</div>
+    </div>
+    <div style="font-size:14px;font-weight:700;color:var(--green)">${formatPrice(isAdmin()?p.prices[stores[0].id]:p.prices[currentUser.store])}</div>
+  </div>`).join('');
+}
+
+function addToOrder(tabIdx, pid){
+  let p = products.find(x=>x.id===pid);
+  if(!p) return;
+  let storeKey = isAdmin()?stores[0].id:currentUser.store;
+  let order = orders[tabIdx];
+  let existing = order.find(x=>x.id===pid);
+  if(existing){ existing.qty++; }
+  else{ order.push({id:p.id,name:p.name,unit:p.unit,price:p.prices[storeKey],qty:1}); }
+  document.getElementById(`orderSearch${tabIdx}`).value='';
+  document.getElementById(`orderSearchResult${tabIdx}`).style.display='none';
+  renderOrder(tabIdx);
+  updateOrderBadges();
+}
+
+function addToOrderByBarcode(tabIdx, barcode){
+  let p = barcodeMap[barcode];
+  if(!p){ showToast('Không tìm thấy sản phẩm!','red'); return; }
+  addToOrder(tabIdx, p.id);
+  showToast(`Đã thêm: ${p.name}`,'green');
+}
+
+function renderOrder(tabIdx){
+  let order = orders[tabIdx];
+  let isEmpty = order.length===0;
+  document.getElementById(`emptyOrder${tabIdx}`).style.display=isEmpty?'flex':'none';
+  let itemsEl = document.getElementById(`orderItems${tabIdx}`);
+  let totalBar = document.getElementById(`totalBar${tabIdx}`);
+  let actions = document.getElementById(`orderActions${tabIdx}`);
+  totalBar.style.display=isEmpty?'none':'flex';
+  actions.style.display=isEmpty?'none':'flex';
+
+  itemsEl.innerHTML=order.map((item,i)=>`
+    <div class="order-item">
+      <div class="order-item-name">${item.name}<br><span class="order-item-unit">${item.unit}</span></div>
+      <div class="order-qty-wrap">
+        <button class="qty-btn minus" onclick="changeQty(${tabIdx},${i},-1)">−</button>
+        <span class="qty-num">${item.qty}</span>
+        <button class="qty-btn plus" onclick="changeQty(${tabIdx},${i},1)">+</button>
+      </div>
+      <div class="order-item-price">${formatPrice(item.price*item.qty)}</div>
+    </div>
+  `).join('');
+
+  let total = order.reduce((s,x)=>s+x.price*x.qty,0);
+  let count = order.reduce((s,x)=>s+x.qty,0);
+  document.getElementById(`totalAmount${tabIdx}`).textContent=formatPrice(total);
+  document.getElementById(`totalCount${tabIdx}`).textContent=`${count} sản phẩm`;
+}
+
+function changeQty(tabIdx,itemIdx,delta){
+  let order=orders[tabIdx];
+  order[itemIdx].qty+=delta;
+  if(order[itemIdx].qty<=0){
+    if(confirm(`Xoá "${order[itemIdx].name}" khỏi đơn?`)){
+      order.splice(itemIdx,1);
+    } else {
+      order[itemIdx].qty=1;
+    }
+  }
+  renderOrder(tabIdx);
+  updateOrderBadges();
+}
+
+function clearOrder(tabIdx){
+  orders[tabIdx]=[];
+  document.getElementById(`orderSearch${tabIdx}`).value='';
+  document.getElementById(`orderSearchResult${tabIdx}`).style.display='none';
+  renderOrder(tabIdx);
+  updateOrderBadges();
+}
+
+function updateOrderBadges(){
+  orders.forEach((order,i)=>{
+    let count=order.reduce((s,x)=>s+x.qty,0);
+    let b=document.getElementById(`badge${i}`);
+    b.textContent=count>0?count:'';
+  });
+  let total=orders.reduce((s,o)=>s+o.reduce((ss,x)=>ss+x.qty,0),0);
+  let nb=document.getElementById('orderNavBadge');
+  nb.textContent=total>0?total:'';
+  nb.classList.toggle('show',total>0);
+}
+
+function printOrder(tabIdx){
+  let order=orders[tabIdx];
+  if(!order.length){ showToast('Đơn hàng trống!','red'); return; }
+  let storeKey=isAdmin()?stores[0].id:currentUser.store;
+  let storeName=isAdmin()?stores[0].name:currentUser.name;
+  let now=new Date();
+  let dateStr=`${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+  let total=order.reduce((s,x)=>s+x.price*x.qty,0);
+  let rows=order.map(x=>`<div class="print-row"><span>${x.name} (${x.unit}) x${x.qty}</span><span>${formatPrice(x.price*x.qty)}</span></div>`).join('');
+
+  document.getElementById('printArea').innerHTML=`
+    <div class="print-store">${storeName}</div>
+    <div class="print-date">${dateStr}</div>
+    <hr class="print-hr">
+    ${rows}
+    <hr class="print-hr">
+    <div class="print-total"><span>TỔNG TIỀN</span><span>${formatPrice(total)}</span></div>
+    <div class="print-footer">Cảm ơn quý khách!</div>
+  `;
+  window.print();
+  setTimeout(()=>clearOrder(tabIdx),500);
+}
+
+// ===== THÊM SẢN PHẨM =====
+function renderAddForm(){
+  let sel=document.getElementById('addCat');
+  sel.innerHTML=categories.map(c=>`<option value="${c}">${c}</option>`).join('');
+  renderPriceGrid();
+}
+
+function renderPriceGrid(){
+  let grid=document.getElementById('addPriceGrid');
+  if(!grid) return;
+  grid.innerHTML=stores.map(s=>`<div class="price-cell"><label>${s.name}</label><input type="number" id="aprice_${s.id}" value="0" placeholder="0"></div>`).join('');
+}
+
+function addNewCategory(){
+  let val=document.getElementById('newCatInput').value.trim();
+  if(!val) return;
+  if(categories.includes(val)){ showToast('Danh mục đã tồn tại!','red'); return; }
+  categories.push(val);
+  document.getElementById('newCatInput').value='';
+  saveToStorage();
+  renderCatFilter();
+  renderAddForm();
+  showToast(`Đã thêm danh mục "${val}"`,'green');
+}
+
+async function submitAddProduct(){
+  let name=document.getElementById('addName').value.trim();
+  let cat=document.getElementById('addCat').value;
+  let barcode=document.getElementById('addBarcode').value.trim();
+  let unit=document.getElementById('addUnit').value.trim();
+  if(!name||!barcode||!unit){ showToast('Vui lòng nhập đủ thông tin!','red'); return; }
+  if(products.find(p=>p.barcode===barcode)){ showToast('Mã vạch đã tồn tại!','red'); return; }
+  let prices={};
+  stores.forEach(s=>{ prices[s.id]=parseInt(document.getElementById(`aprice_${s.id}`).value)||0; });
+  let pid='p'+Date.now();
+  let newP={id:pid,name,cat,barcode,unit,prices,_fromSheets:true};
+  products.push(newP);
+  barcodeMap[barcode]=newP;
+  saveToStorage();
+  // Sync lên Sheets
+  showToast('Đang lưu...','');
+  try{
+    let resp=await fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'saveProduct',id:pid,name,cat,barcode,unit})
+    });
+    let result=await resp.json();
+    if(result.ok) showToast('Đã thêm sản phẩm!','green');
+    else showToast(result.error||'Lỗi khi lưu!','red');
+  }catch(e){ showToast('Lưu local, chưa sync!',''); }
+  // Reset form
+  document.getElementById('addName').value='';
+  document.getElementById('addBarcode').value='';
+  document.getElementById('addUnit').value='';
+  stores.forEach(s=>{ document.getElementById(`aprice_${s.id}`).value='0'; });
+  let sEl=document.getElementById('addSuccess');
+  sEl.style.display='block';
+  setTimeout(()=>sEl.style.display='none',2500);
+  renderManage();
+}
+
+// ===== QUẢN LÝ =====
+function renderManage(){
+  renderStoreList();
+  renderPwAccounts();
+  document.getElementById('productCount').textContent=products.length;
+  renderManageProducts();
+}
+
+function renderStoreList(){
+  let html=stores.map((s,i)=>`<div class="store-row">
+    <input type="text" id="storeName_${i}" value="${s.name}">
+    <button class="store-row-btn save" onclick="saveStoreName(${i})">Lưu</button>
+    ${stores.length>1?`<button class="store-row-btn del" onclick="deleteStore(${i})">Xoá</button>`:''}
+  </div>`).join('');
+  document.getElementById('storeList').innerHTML=html;
+}
+
+function saveStoreName(i){
+  let val=document.getElementById(`storeName_${i}`).value.trim();
+  if(!val) return;
+  stores[i].name=val;
+  saveToStorage();
+  showToast('Đã lưu tên gian hàng!','green');
+  renderManage();
+}
+
+function deleteStore(i){
+  if(!confirm(`Xoá gian hàng "${stores[i].name}"?`)) return;
+  stores.splice(i,1);
+  saveToStorage();
+  renderManage();
+  showToast('Đã xoá gian hàng!');
+}
+
+function addStore(){
+  if(stores.length>=6){ showToast('Tối đa 6 gian hàng!','red'); return; }
+  let newId='store'+Date.now();
+  stores.push({id:newId,name:'Gian hàng mới'});
+  products.forEach(p=>{ if(!p.prices[newId]) p.prices[newId]=0; });
+  renderManage();
+  renderAddForm();
+}
+
+function renderPwAccounts(){
+  let sel=document.getElementById('pwAccount');
+  sel.innerHTML=accounts.map(a=>`<option value="${a.user}">${a.name} (${a.user})</option>`).join('');
+}
+
+function changePassword(){
+  let acc=document.getElementById('pwAccount').value;
+  let pin=document.getElementById('pwPin').value;
+  let newPw=document.getElementById('pwNew').value;
+  let msg=document.getElementById('pwMsg');
+  if(pin!==PIN){ msg.className='pw-msg err'; msg.style.display='block'; msg.textContent='Mã PIN không đúng!'; return; }
+  if(!newPw){ msg.className='pw-msg err'; msg.style.display='block'; msg.textContent='Vui lòng nhập mật khẩu mới!'; return; }
+  let a=accounts.find(x=>x.user===acc);
+  if(a){ a.pass=newPw; saveToStorage(); msg.className='pw-msg ok'; msg.style.display='block'; msg.textContent='Đổi mật khẩu thành công!'; }
+  document.getElementById('pwPin').value='';
+  document.getElementById('pwNew').value='';
+}
+
+function renderManageProducts(){
+  let el=document.getElementById('manageProductList');
+  el.innerHTML=products.map(p=>`<div style="padding:8px 0;border-bottom:1px solid #f3f4f6;display:flex;justify-content:space-between;align-items:center;gap:8px">
+    <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.name}</div><div style="font-size:11px;color:#9ca3af">${p.barcode} · ${p.unit} · ${p.cat}</div></div>
+    <div style="display:flex;gap:4px;flex-shrink:0">
+      <button onclick="editProduct('${p.id}')" style="background:#eff6ff;border:none;border-radius:6px;padding:4px 8px;color:var(--blue);font-size:12px;font-weight:600;cursor:pointer">Sửa</button>
+      <button onclick="deleteProduct('${p.id}')" style="background:#fff1ee;border:none;border-radius:6px;padding:4px 8px;color:var(--red);font-size:12px;font-weight:600;cursor:pointer">Xoá</button>
+    </div>
+  </div>`).join('');
+}
+
+async function deleteProduct(pid){
+  let p=products.find(x=>x.id===pid);
+  if(!p) return;
+  if(!confirm(`Xoá "${p.name}"?`)) return;
+  delete barcodeMap[p.barcode];
+  products=products.filter(x=>x.id!==pid);
+  saveToStorage();
+  renderManage();
+  showToast('Đang xoá...','');
+  try{
+    await fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'deleteProduct',id:pid})
+    });
+    showToast('Đã xoá sản phẩm!','green');
+  }catch(e){ showToast('Xoá local, chưa sync!',''); }
+}
+
+function editProduct(pid){
+  let p=products.find(x=>x.id===pid);
+  if(!p) return;
+  let modal=document.getElementById('editProductModal');
+  if(!modal){
+    modal=document.createElement('div');
+    modal.id='editProductModal';
+    modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:flex-end;justify-content:center';
+    modal.onclick=function(e){if(e.target===modal)modal.style.display='none'};
+    document.body.appendChild(modal);
+  }
+  let catOpts=categories.map(c=>`<option value="${c}"${c===p.cat?' selected':''}>${c}</option>`).join('');
+  modal.innerHTML=`<div style="background:#fff;border-radius:20px 20px 0 0;width:100%;max-width:500px;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom));max-height:85vh;overflow-y:auto">
+    <div style="width:40px;height:4px;background:#e5e7eb;border-radius:2px;margin:0 auto 16px"></div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px">✏️ Sửa sản phẩm</div>
+    <div class="form-field"><label>Tên sản phẩm</label><input type="text" id="editName" value="${p.name}" style="width:100%;border:1.5px solid #e5e7eb;border-radius:8px;padding:11px 12px;font-size:15px;font-family:inherit;outline:none"></div>
+    <div class="form-field"><label>Danh mục</label><select id="editCat" style="width:100%;border:1.5px solid #e5e7eb;border-radius:8px;padding:11px 12px;font-size:15px;font-family:inherit;outline:none;background:#fff">${catOpts}</select></div>
+    <div class="form-field"><label>Đơn vị</label><input type="text" id="editUnit" value="${p.unit}" style="width:100%;border:1.5px solid #e5e7eb;border-radius:8px;padding:11px 12px;font-size:15px;font-family:inherit;outline:none"></div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:16px">Mã vạch: ${p.barcode} (không thể sửa)</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="saveEditProduct('${pid}')" style="flex:1;background:var(--blue);border:none;border-radius:10px;padding:13px;color:#fff;font-size:15px;font-weight:700;font-family:inherit;cursor:pointer">Lưu</button>
+      <button onclick="document.getElementById('editProductModal').style.display='none'" style="background:#f3f4f6;border:none;border-radius:10px;padding:13px 18px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer">Huỷ</button>
+    </div>
+  </div>`;
+  modal.style.display='flex';
+}
+
+async function saveEditProduct(pid){
+  let p=products.find(x=>x.id===pid);
+  if(!p) return;
+  let name=document.getElementById('editName').value.trim();
+  let cat=document.getElementById('editCat').value;
+  let unit=document.getElementById('editUnit').value.trim();
+  if(!name||!unit){ showToast('Vui lòng nhập đủ thông tin!','red'); return; }
+  p.name=name; p.cat=cat; p.unit=unit;
+  saveToStorage();
+  document.getElementById('editProductModal').style.display='none';
+  renderManage();
+  showToast('Đang lưu...','');
+  try{
+    await fetch(APPS_SCRIPT_URL,{
+      method:'POST',
+      body:JSON.stringify({action:'updateProduct',id:pid,name,cat,unit})
+    });
+    showToast('Đã lưu!','green');
+  }catch(e){ showToast('Lưu local, chưa sync!',''); }
+}
+
+// ===== CAMERA =====
+function openCamera(mode, orderIdx){
+  cameraMode=mode; cameraOrderIndex=orderIdx||0;
+  document.getElementById('cameraModal').classList.add('open');
+  document.getElementById('manualBarcode').value='';
+  document.getElementById('cameraStatus').textContent='Đưa mã vạch vào khung để quét';
+  startCamera();
+}
+
+async function startCamera(){
+  try{
+    cameraStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}
+    });
+    let video=document.getElementById('cameraVideo');
+    video.srcObject=cameraStream;
+    await video.play();
+    startScan();
+  } catch(err){
+    let msg='Không mở được camera, nhập mã tay bên dưới';
+    if(err.name==='NotAllowedError') msg='Bạn chưa cấp quyền camera. Nhập mã tay bên dưới.';
+    document.getElementById('cameraStatus').textContent=msg;
+  }
+}
+
+function startScan(){
+  if(cameraTimer) clearInterval(cameraTimer);
+  cameraTimer=setInterval(async()=>{
+    if(!zbarReady||!cameraStream) return;
+    let video=document.getElementById('cameraVideo');
+    if(video.readyState<2) return;
+    let canvas=document.getElementById('cameraCanvas');
+    canvas.width=video.videoWidth||640;
+    canvas.height=video.videoHeight||480;
+    let ctx=canvas.getContext('2d');
+    ctx.drawImage(video,0,0,canvas.width,canvas.height);
+    let imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+    try{
+      let results=await window.zbarWasm.scanImageData(imgData);
+      if(results&&results.length>0){
+        let code=results[0].decode();
+        closeCamera();
+        handleBarcode(code);
+      }
+    }catch(e){}
+  },300);
+}
+
+function closeCamera(){
+  if(cameraTimer){ clearInterval(cameraTimer); cameraTimer=null; }
+  if(cameraStream){ cameraStream.getTracks().forEach(t=>t.stop()); cameraStream=null; }
+  document.getElementById('cameraModal').classList.remove('open');
+}
+
+function manualBarcodeOk(){
+  let code=document.getElementById('manualBarcode').value.trim();
+  if(!code) return;
+  closeCamera();
+  handleBarcode(code);
+}
+
+document.getElementById('manualBarcode').addEventListener('keydown',e=>{if(e.key==='Enter')manualBarcodeOk()});
+
+function handleBarcode(code){
+  if(cameraMode==='search'){
+    document.getElementById('searchInput').value=code;
+    doSearch();
+    // Auto show product if exact match
+    let p=barcodeMap[code];
+    if(p){ selectedProduct=p; renderProductDetailModal(p); }
+    else showToast('Không tìm thấy sản phẩm!','red');
+  } else if(cameraMode==='order'){
+    addToOrderByBarcode(cameraOrderIndex, code);
+  } else if(cameraMode==='add'){
+    document.getElementById('addBarcode').value=code;
+  }
+}
+
+// ===== PAGE NAV =====
+function switchPage(page, btn){
+  currentPage=page;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelector(`#page${page.charAt(0).toUpperCase()+page.slice(1)}`).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  closeCamera();
+  closeProductDetail();
+  if(page==='manage') renderManage();
+}
+
+// ===== REFRESH =====
+async function refreshPrices(){
+  let sub = document.getElementById('topBarSub');
+  sub.textContent = '⏳ Đang tải...';
+  showToast('Đang tải giá mới nhất...','');
+  try{
+    await loadPricesFromSheets();
+    renderCatFilter();
+    renderSearch();
+    if(isAdmin()){ renderManage(); }
+    sub.textContent = isAdmin()?'Toàn quyền quản lý':'✅ Giá đã cập nhật';
+    showToast('Đã tải giá mới nhất!','green');
+  } catch(e){
+    sub.textContent = '⚠️ Không kết nối được';
+    showToast('Lỗi kết nối, thử lại sau!','red');
+  }
+}
+
+// ===== UTILS =====
+function formatPrice(n){
+  if(n===0||n===null||n===undefined) return '0đ';
+  return n.toLocaleString('vi-VN')+'đ';
+}
+
+function showToast(msg, type){
+  let t=document.getElementById('toast');
+  t.textContent=msg;
+  t.className='show'+(type?' '+type:'');
+  setTimeout(()=>t.className='',2200);
+}
+</script>
+</body>
+</html>
